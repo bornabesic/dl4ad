@@ -13,7 +13,8 @@ class NeuralNetwork(nn.Module):
         self.conv4 = nn.Conv2d(128, 128, kernel_size = 3) # 128 filters: 3 x 3
         self.maxpool2 = nn.MaxPool2d(kernel_size = 2, stride = 2)
 
-        self.fc = nn.Linear(128 * 5 * 5, 43)
+        self.linear1 = nn.Linear(128 * 5 * 5, 512)
+        self.linear2 = nn.Linear(512, 43)
 
     def forward(self, x):
         # Conv, ReLU, Conv, ReLU, Max-pooling
@@ -28,7 +29,8 @@ class NeuralNetwork(nn.Module):
 
         # Fully-connected layer
         flat = mp2.view(mp2.size(0), -1)
-        y = F.softmax(self.fc(flat))
+        hidden = F.relu(self.linear1(flat))
+        y = F.softmax(self.linear2(hidden), dim = 1)
 
         return y
 

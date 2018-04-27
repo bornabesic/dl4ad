@@ -31,14 +31,22 @@ net.cuda()
 cost = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr = 1e-3, momentum = 0.9)
 
-for i, batch in enumerate(dataloader):
-    Xs, ys = batch
-    Xs, ys = Xs.cuda(), ys.cuda()
-    optimizer.zero_grad()
+for epoch in range(10):
+    for i, batch in enumerate(dataloader):
+        Xs, ys = batch
+        Xs, ys = torch.autograd.Variable(Xs.cuda()), torch.autograd.Variable(ys.cuda())
+        optimizer.zero_grad()
 
-    # Forward pass
-    ys_hat = net(Xs)
-    loss = cost(ys_hat, ys)
-    print("Loss: ", loss)
+        # Forward pass
+        ys_hat = net(Xs)
+        print(ys_hat)
+        print(ys)
+        input()
+        loss = cost(ys_hat, ys)
+        print("Loss: ", loss)
 
-    input()
+        # Backward pass
+        loss.backward()
+
+        # Optimize
+        optimizer.step()
