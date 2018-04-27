@@ -27,6 +27,6 @@ class SubtractMean(object):
 
 class MakeTensor(object):
 
-    def __call__(self, image):
-        return torch.from_numpy(image)
+    def __call__(self, obj):
+        return torch.from_numpy(obj)
 

@@ -2,13 +2,15 @@
 import os
 from os.path import join
 from torch.utils.data import Dataset
-from utils import lines
+from utils import lines, one_hot_encoding
 from skimage import io
 
 class GTSRB(Dataset):
     def __init__(self, training_path, transform = None):
         self.transform = transform
         self.class_dirs = [o for o in os.listdir(training_path) if os.path.isdir(os.path.join(training_path, o))]
+
+        self.num_classes = len(self.class_dirs)
         
         self.data = []
         for d in self.class_dirs:
@@ -26,7 +28,7 @@ class GTSRB(Dataset):
         sample = io.imread(image_path)
         if self.transform is not None:
             sample = self.transform(sample)
-        return sample
+        return (sample, one_hot_encoding(klass, self.num_classes))
 
     @staticmethod
     def read_annotation(annotation_path):
