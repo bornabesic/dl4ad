@@ -23,7 +23,7 @@ class SubtractMean(object):
         ch2_new = ch2 - np.mean(ch2)
         ch3_new = ch3 - np.mean(ch3)
 
-        return np.stack((ch1_new, ch2_new, ch3_new), axis = 2)
+        return np.stack((ch1_new, ch2_new, ch3_new), axis = 0)
 
 class MakeTensor(object):
 

@@ -28,7 +28,7 @@ class GTSRB(Dataset):
         sample = io.imread(image_path)
         if self.transform is not None:
             sample = self.transform(sample)
-        return (sample, one_hot_encoding(klass, self.num_classes))
+        return (sample, klass)
 
     @staticmethod
     def read_annotation(annotation_path):

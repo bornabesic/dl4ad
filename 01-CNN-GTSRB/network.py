@@ -17,7 +17,7 @@ class NeuralNetwork(nn.Module):
 
     def forward(self, x):
         # Conv, ReLU, Conv, ReLU, Max-pooling
-        relu1 = F.relu(self.conv1(x))
+        relu1 = F.relu(self.conv1(x.float()))
         relu2 = F.relu(self.conv2(relu1))
         mp1 = self.maxpool1(relu2)
 

@@ -19,11 +19,11 @@ data = GTSRB(
     ]
 ))
 
-# dataloader = DataLoader(data,
-#     batch_size = 4,
-#     shuffle = True,
-#     num_workers = 4
-# )
+dataloader = DataLoader(data,
+    batch_size = 4,
+    shuffle = True,
+    num_workers = 4
+)
 
 net = NeuralNetwork()
 net.cuda()
@@ -31,12 +31,14 @@ net.cuda()
 cost = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr = 1e-3, momentum = 0.9)
 
-for i, batch in enumerate(data):
-    X, y = batch
+for i, batch in enumerate(dataloader):
+    Xs, ys = batch
+    Xs, ys = Xs.cuda(), ys.cuda()
     optimizer.zero_grad()
 
     # Forward pass
-    y_hat = net(X)
-    loss = cost(y_hat, y)
+    ys_hat = net(Xs)
+    loss = cost(ys_hat, ys)
+    print("Loss: ", loss)
 
     input()
