@@ -44,7 +44,7 @@ def train_valid_loader(data, valid_percentage, batch_size = 4, num_workers = 1, 
 
     return train_loader, valid_loader
 
-def test_loader(data, batch_size = 1, shuffle = True, num_workers = 1, pin_memory = True):
+def test_loader(data, batch_size = 4, shuffle = True, num_workers = 1, pin_memory = True):
     return DataLoader(data,
         batch_size = batch_size,
         num_workers = num_workers,
