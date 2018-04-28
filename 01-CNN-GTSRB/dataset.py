@@ -1,24 +1,62 @@
 
 import os
 from os.path import join
-from torch.utils.data import Dataset
-from utils import lines, one_hot_encoding
+import numpy as np
+from torch.utils.data import Dataset, DataLoader
+from torch.utils.data.sampler import SubsetRandomSampler
 from skimage import io
 
-class GTSRB(Dataset):
-    def __init__(self, training_path, transform = None):
-        self.transform = transform
-        self.class_dirs = [o for o in os.listdir(training_path) if os.path.isdir(os.path.join(training_path, o))]
+from utils import lines
 
-        self.num_classes = len(self.class_dirs)
-        
+def read_annotation(annotation_path):
+    data = []
+    for line in lines(annotation_path):
+        cells = line.split(";")
+        if cells[0] == "Filename":
+            continue
+        image_path, width, height, klass = os.path.join(os.path.dirname(annotation_path), cells[0]), int(cells[1]), int(cells[2]), int(cells[-1])
+        data.append((image_path, width, height, klass))
+    return data
+
+def train_valid_loader(data, valid_percentage, batch_size = 4, num_workers = 1, pin_memory = True):
+    num_samples = len(data)
+    indices = list(range(num_samples))
+    split = int(valid_percentage * num_samples)
+
+    np.random.shuffle(indices)
+
+    train_idx, valid_idx = indices[split:], indices[:split]
+    train_sampler = SubsetRandomSampler(train_idx)
+    valid_sampler = SubsetRandomSampler(valid_idx)
+
+    train_loader = DataLoader(data,
+        batch_size = batch_size,
+        sampler = train_sampler,
+        num_workers = num_workers,
+        pin_memory = pin_memory
+    )
+    valid_loader = DataLoader(data,
+        batch_size = batch_size,
+        sampler = valid_sampler,
+        num_workers = num_workers,
+        pin_memory = pin_memory
+    )
+
+    return train_loader, valid_loader
+
+def test_loader(data, batch_size = 1, shuffle = True, num_workers = 1, pin_memory = True):
+    return DataLoader(data,
+        batch_size = batch_size,
+        num_workers = num_workers,
+        pin_memory = pin_memory,
+        shuffle = shuffle
+    )
+
+class GTSRB(Dataset):
+    def __init__(self, transform = None):
+        self.size = 0
         self.data = []
-        for d in self.class_dirs:
-            csv_file_name = "GT-{}.csv".format(d)
-            annotation_path = os.path.join(training_path, d, csv_file_name)
-            self.data += GTSRB.read_annotation(annotation_path)
-        
-        self.size = len(self.data)
+        self.transform = transform
 
     def __len__(self):
         return self.size
@@ -30,14 +68,24 @@ class GTSRB(Dataset):
             sample = self.transform(sample)
         return (sample, klass)
 
-    @staticmethod
-    def read_annotation(annotation_path):
-        data = []
-        for line in lines(annotation_path):
-            cells = line.split(";")
-            if cells[0] == "Filename":
-                continue
-            image_path, width, height, klass = os.path.join(os.path.dirname(annotation_path), cells[0]), int(cells[1]), int(cells[2]), int(cells[-1])
-            data.append((image_path, width, height, klass))
-        return data
+class GTSRBTraining(GTSRB):
+    def __init__(self, training_path, transform = None):
+        self.transform = transform
+        self.class_dirs = [o for o in os.listdir(training_path) if os.path.isdir(os.path.join(training_path, o))]
 
+        self.num_classes = len(self.class_dirs)
+
+        self.data = []
+        for d in self.class_dirs:
+            csv_file_name = "GT-{}.csv".format(d)
+            annotation_path = os.path.join(training_path, d, csv_file_name)
+            self.data += read_annotation(annotation_path)
+
+        self.size = len(self.data)
+
+class GTSRBTest(GTSRB):
+    def __init__(self, test_path, transform = None):
+        self.transform = transform
+        annotation_path = os.path.join(test_path, "GT-final_test.test.csv")
+        self.data = read_annotation(annotation_path)
+        self.size = len(self.data)

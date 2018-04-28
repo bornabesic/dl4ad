@@ -33,7 +33,7 @@ class NeuralNetwork(nn.Module):
         flat = mp2.view(mp2.size(0), -1)
         hidden = F.relu(self.linear1(flat))
         dropout = F.dropout(hidden)
-        y = F.softmax(self.linear2(dropout), dim = 1)
+        y = F.log_softmax(self.linear2(dropout), dim = 1)
 
         return y
 
