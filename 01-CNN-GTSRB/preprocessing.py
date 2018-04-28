@@ -10,7 +10,12 @@ class Resize(object):
         self.h = h
 
     def __call__(self, image):
-        return transform.resize(image, output_shape = (self.w, self.h))
+        return transform.resize(
+            image,
+            output_shape = (self.w, self.h),
+            preserve_range = True,
+            mode = "constant"
+        )
 
 class SubtractMean(object):
 
