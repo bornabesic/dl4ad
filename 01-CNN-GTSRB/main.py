@@ -5,6 +5,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import transforms
 from torch.autograd import Variable
+import matplotlib as mpl
+mpl.use("Agg")
 import matplotlib.pyplot as plt
 
 from dataset import GTSRBTraining, GTSRBTest, train_valid_loader, test_loader
