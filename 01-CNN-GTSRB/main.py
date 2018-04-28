@@ -111,4 +111,5 @@ for batch in test_loader:
     _, predicted = torch.max(ys_hat.data, 1)
     total_predictions += ys.size(0)
     correct_predictions += (predicted == ys.data).sum().item()
-print("Test accuracy: {}%".format(correct_predictions * 100.0 / total_predictions))
+accuracy = correct_predictions * 100.0 / total_predictions
+print("Test accuracy: {}%".format(accuracy))

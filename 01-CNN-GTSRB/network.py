@@ -11,10 +11,10 @@ class NeuralNetwork(nn.Module):
 
         self.conv3 = nn.Conv2d(32, 64, kernel_size = 3) # 64 filters: 3 x 3
         self.conv4 = nn.Conv2d(64, 64, kernel_size = 3) # 64 filters: 3 x 3
-        self.conv5 = nn.Conv2d(64, 128, kernel_size = 3) # 128 filters: 3 x 3
+        self.conv5 = nn.Conv2d(64, 64, kernel_size = 3) # 128 filters: 3 x 3
         self.maxpool2 = nn.MaxPool2d(kernel_size = 2, stride = 2)
 
-        self.linear1 = nn.Linear(128 * 4 * 4, 512)
+        self.linear1 = nn.Linear(64 * 4 * 4, 512)
         self.linear2 = nn.Linear(512, 43)
 
     def forward(self, x):
