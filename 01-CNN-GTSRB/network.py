@@ -27,7 +27,8 @@ class NeuralNetwork(nn.Module):
         relu3 = F.relu(self.conv3(mp1))
         relu4 = F.relu(self.conv4(relu3))
         relu5 = F.relu(self.conv5(relu4))
-        mp2 = self.maxpool2(relu5)
+        relu5_drop =  F.dropout2d(relu5)
+        mp2 = self.maxpool2(relu5_drop)
 
         # Fully-connected layer
         flat = mp2.view(mp2.size(0), -1)

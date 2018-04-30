@@ -2,6 +2,7 @@
 import os
 from os.path import join
 import numpy as np
+import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from skimage import io
@@ -18,16 +19,16 @@ def read_annotation(annotation_path):
         data.append((image_path, width, height, klass))
     return data
 
-def train_valid_loader(data, valid_percentage, batch_size = 4, num_workers = 1, pin_memory = True):
+def make_train_valid_loader(data, valid_percentage, batch_size = 4, num_workers = 1, pin_memory = True):
     num_samples = len(data)
     indices = list(range(num_samples))
     split = int(valid_percentage * num_samples)
 
     np.random.shuffle(indices)
 
-    train_idx, valid_idx = indices[split:], indices[:split]
-    train_sampler = SubsetRandomSampler(train_idx)
-    valid_sampler = SubsetRandomSampler(valid_idx)
+    train_idxs, valid_idxs = indices[split:], indices[:split]
+    train_sampler = SubsetRandomSampler(train_idxs)
+    valid_sampler = SubsetRandomSampler(valid_idxs)
 
     train_loader = DataLoader(data,
         batch_size = batch_size,
@@ -44,13 +45,26 @@ def train_valid_loader(data, valid_percentage, batch_size = 4, num_workers = 1, 
 
     return train_loader, valid_loader
 
-def test_loader(data, batch_size = 4, shuffle = True, num_workers = 1, pin_memory = True):
+def make_test_loader(data, batch_size = 4, shuffle = True, num_workers = 1, pin_memory = True):
     return DataLoader(data,
         batch_size = batch_size,
         num_workers = num_workers,
         pin_memory = pin_memory,
         shuffle = shuffle
     )
+
+def evaluate(model, loader):
+    model.eval()
+    total_predictions = 0
+    correct_predictions = 0
+    for Xs, ys in loader:
+        Xs, ys = Xs.cuda(), ys.cuda()
+        ys_hat = model(Xs)
+        _, predicted = torch.max(ys_hat.data, 1)
+        total_predictions += ys.size(0)
+        correct_predictions += (predicted == ys.data).sum().item()
+    accuracy = correct_predictions * 100.0 / total_predictions
+    return accuracy
 
 class GTSRB(Dataset):
     def __init__(self, transform = None):
