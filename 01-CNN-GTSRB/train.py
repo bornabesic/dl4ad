@@ -100,10 +100,14 @@ for epoch in range(args.num_epochs):
     print("Validation accuracy: {}%".format(accuracy))
 
 # Plot validation accuracy over epochs
-plt.plot(x, y_training, "b", label = "Training")
+if args.eval_train:
+    plt.plot(x, y_training, "b", label = "Training")
 plt.plot(x, y_validation, "r", label = "Validation")
+plt.xticks(x)
 plt.xlabel("Epoch")
 plt.ylabel("Accuracy (%)")
+plt.grid(True)
+plt.legend()
 plt.savefig("learning_curve.png")
 
 # Save the model
