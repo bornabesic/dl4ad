@@ -8,3 +8,6 @@ dataset:
 	unzip GTSRB_Final_Test_Images.zip -d test
 	mv test/GTSRB/Final_Test/Images/* test/
 	rm -rf test/GTSRB/
+
+clean_models:
+	rm -rf models/
