@@ -53,12 +53,13 @@ def make_test_loader(data, batch_size = 4, shuffle = True, num_workers = 1, pin_
         shuffle = shuffle
     )
 
-def evaluate(model, loader):
+def evaluate(model, loader, cuda = True):
     model.eval()
     total_predictions = 0
     correct_predictions = 0
     for Xs, ys in loader:
-        Xs, ys = Xs.cuda(), ys.cuda()
+        if cuda:
+            Xs, ys = Xs.cuda(), ys.cuda()
         ys_hat = model(Xs)
         _, predicted = torch.max(ys_hat.data, 1)
         total_predictions += ys.size(0)

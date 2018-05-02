@@ -1,26 +1,42 @@
 #!/usr/bin/python3
 
+import os
+import datetime
+import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchvision import transforms
 from torch.autograd import Variable
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 
-from dataset import GTSRBTraining, GTSRBTest, make_train_valid_loader, make_test_loader, evaluate
-from preprocessing import Resize, SubtractMean, MakeTensor
+from dataset import GTSRBTraining, make_train_valid_loader, evaluate
 from network import NeuralNetwork
+from transform import shared_transform
 
-NUM_EPOCHS = 15
+# Parse CLI arguments
+args_parser = argparse.ArgumentParser(
+	formatter_class = argparse.ArgumentDefaultsHelpFormatter
+)
 
-# Transformations
-shared_transform = transforms.Compose([
-    Resize(32, 32),
-    SubtractMean(),
-    MakeTensor()
-])
+args_parser.add_argument(
+	"--num_epochs",
+	type = int,
+	help = "Number of training epochs",
+    default = 15
+)
+
+args_parser.add_argument(
+	"--eval_train",
+	type = bool,
+	help = "Evaluate the model on the training set after each epoch",
+    default = False
+)
+
+args = args_parser.parse_args()
+
+print("Training epochs: {}".format(args.num_epochs))
 
 # Dataset
 training_data = GTSRBTraining(
@@ -28,17 +44,10 @@ training_data = GTSRBTraining(
     transform = shared_transform
 )
 
-test_data = GTSRBTest(
-    test_path = "test",
-    transform = shared_transform
-)
-
 print("Training samples:", len(training_data))
-print("Test samples:", len(test_data))
 
 # Loaders
 train_loader, valid_loader = make_train_valid_loader(training_data, valid_percentage = 0.2)
-test_loader = make_test_loader(test_data)
 
 # Model
 net = NeuralNetwork()
@@ -55,7 +64,7 @@ y_validation = []
 y_training = []
 
 # Epochs
-for epoch in range(NUM_EPOCHS):
+for epoch in range(args.num_epochs):
     x.append(epoch + 1)
     print("[Epoch {}]".format(epoch + 1))
 
@@ -79,10 +88,11 @@ for epoch in range(NUM_EPOCHS):
         if batch_idx % 50 == 0:
             print("{} / {} => loss = {}".format(batch_idx * len(Xs), len(train_loader.dataset), loss.item()))
 
-    # Evaluate on the training set
-    accuracy = evaluate(net, train_loader)
-    y_training.append(accuracy)
-    print("Training accuracy: {}%".format(accuracy))
+    if args.eval_train:
+        # Evaluate on the training set
+        accuracy = evaluate(net, train_loader)
+        y_training.append(accuracy)
+        print("Training accuracy: {}%".format(accuracy))
 
     # Evaluate on the validation set
     accuracy = evaluate(net, valid_loader)
@@ -96,7 +106,13 @@ plt.xlabel("Epoch")
 plt.ylabel("Accuracy (%)")
 plt.savefig("learning_curve.png")
 
-# Evaluate on the test set
-print("[TEST]")
-accuracy = evaluate(net, test_loader)
-print("Test accuracy: {}%".format(accuracy))
+# Save the model
+directory = "models"
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+timestamp = datetime.datetime.now()
+
+model_path = "{}/model_{}_{}_{}_{}_{}".format(directory, timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute)
+torch.save(net.state_dict(), model_path)
+print("Model parameters saved to {}.".format(model_path))
