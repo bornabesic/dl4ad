@@ -2,6 +2,7 @@
 import torch
 import numpy as np
 from skimage import transform
+from torchvision import transforms
 
 class Resize(object):
 
@@ -35,3 +36,10 @@ class MakeTensor(object):
     def __call__(self, obj):
         return torch.from_numpy(obj)
 
+
+# Shared transformations
+shared_transform = transforms.Compose([
+    Resize(32, 32),
+    SubtractMean(),
+    MakeTensor()
+])

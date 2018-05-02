@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 from dataset import GTSRBTraining, make_train_valid_loader, evaluate
 from network import NeuralNetwork
-from transform import shared_transform
+from preprocessing import shared_transform
 
 # Parse CLI arguments
 args_parser = argparse.ArgumentParser(

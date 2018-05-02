@@ -5,7 +5,7 @@ import argparse
 
 from dataset import GTSRBTest, make_test_loader, evaluate
 from network import NeuralNetwork
-from transform import shared_transform
+from preprocessing import shared_transform
 
 # Parse CLI arguments
 args_parser = argparse.ArgumentParser(
