@@ -21,6 +21,20 @@ args_parser = argparse.ArgumentParser(
 )
 
 args_parser.add_argument(
+	"--learning_rate",
+	type = float,
+	help = "SGD learning rate",
+    default = 1e-4
+)
+
+args_parser.add_argument(
+	"--momentum",
+	type = float,
+	help = "SGD momentum",
+    default = 0.5
+)
+
+args_parser.add_argument(
 	"--num_epochs",
 	type = int,
 	help = "Number of training epochs",
@@ -55,7 +69,7 @@ net.cuda()
 
 # Loss function and optimization method
 cost = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr = 1e-4, momentum = 0.5)
+optimizer = optim.SGD(net.parameters(), lr = args.learning_rate, momentum = args.momentum)
 
 # Plot variables
 x = []
