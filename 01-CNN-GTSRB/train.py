@@ -108,15 +108,17 @@ plt.xlabel("Epoch")
 plt.ylabel("Accuracy (%)")
 plt.grid(True)
 plt.legend()
-plt.savefig("learning_curve.png")
 
-# Save the model
+# Save the learning curve and the model
+timestamp = datetime.datetime.now()
+identifier = "model_{}_{}_{}_{}_{}".format(timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute)
+
 directory = "models"
 if not os.path.exists(directory):
     os.makedirs(directory)
 
-timestamp = datetime.datetime.now()
+plt.savefig("{}/{}.lc.png".format(directory, identifier))
 
-model_path = "{}/model_{}_{}_{}_{}_{}".format(directory, timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute)
+model_path = "{}/{}".format(directory, identifier)
 torch.save(net.state_dict(), model_path)
 print("Model parameters saved to {}.".format(model_path))
