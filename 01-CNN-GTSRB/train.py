@@ -50,6 +50,8 @@ args_parser.add_argument(
 
 args = args_parser.parse_args()
 
+print("Learning rate: {}".format(args.learning_rate))
+print("Momentum: {}".format(args.momentum))
 print("Training epochs: {}".format(args.num_epochs))
 
 # Dataset
@@ -136,3 +138,4 @@ plt.savefig("{}/{}.lc.png".format(directory, identifier))
 model_path = "{}/{}".format(directory, identifier)
 torch.save(net.state_dict(), model_path)
 print("Model parameters saved to {}.".format(model_path))
+
