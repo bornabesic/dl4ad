@@ -1,5 +1,10 @@
 # German Traffic Sign Recognition Benchmark
 
+## Downloading the dataset
+```
+make dataset
+```
+
 ## Training
 
 ```
