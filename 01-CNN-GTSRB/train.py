@@ -24,7 +24,7 @@ args_parser.add_argument(
 	"--num_epochs",
 	type = int,
 	help = "Number of training epochs",
-    default = 15
+    default = 20
 )
 
 args_parser.add_argument(
@@ -58,7 +58,6 @@ cost = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr = 1e-4, momentum = 0.5)
 
 # Plot variables
-plt.hold(True)
 x = []
 y_validation = []
 y_training = []
@@ -100,6 +99,7 @@ for epoch in range(args.num_epochs):
     print("Validation accuracy: {}%".format(accuracy))
 
 # Plot validation accuracy over epochs
+plt.hold(True)
 if args.eval_train:
     plt.plot(x, y_training, "b", label = "Training")
 plt.plot(x, y_validation, "r", label = "Validation")
