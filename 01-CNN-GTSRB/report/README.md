@@ -1,7 +1,7 @@
 # Report
 ## Training
-![](report/model_2018_5_4_10_19.loss.png)
-![](report/model_2018_5_4_10_19.lc.png)
+![](model_2018_5_4_10_19.loss.png)
+![](model_2018_5_4_10_19.lc.png)
 
 Validation accuracy: 98.92 %
 
