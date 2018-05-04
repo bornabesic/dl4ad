@@ -77,6 +77,7 @@ optimizer = optim.SGD(net.parameters(), lr = args.learning_rate, momentum = args
 x = []
 y_validation = []
 y_training = []
+y_loss = []
 
 # Epochs
 for epoch in range(args.num_epochs):
@@ -85,12 +86,16 @@ for epoch in range(args.num_epochs):
 
     # Train
     net.train()
+    total_loss = 0
+    num_iters = 0
     for batch_idx, (Xs, ys) in enumerate(train_loader):
         Xs, ys = Xs.cuda(), ys.cuda()
 
         # Forward pass
         ys_hat = net(Xs)
         loss = cost(ys_hat, ys)
+        total_loss += loss
+        num_iters += 1
 
         # Backward pass
         optimizer.zero_grad()
@@ -109,23 +114,36 @@ for epoch in range(args.num_epochs):
         y_training.append(accuracy)
         print("Training accuracy: {}%".format(accuracy))
 
+    # Save the average epoch loss
+    y_loss.append(total_loss / num_iters)
+
     # Evaluate on the validation set
     accuracy = evaluate(net, valid_loader)
     y_validation.append(accuracy)
     print("Validation accuracy: {}%".format(accuracy))
 
-# Plot validation accuracy over epochs
-plt.hold(True)
+# Plot validation accuracy over the epochs
+acc_fig = plt.figure()
+acc_ax = acc_fig.gca()
+acc_fig.hold(True)
 if args.eval_train:
-    plt.plot(x, y_training, "b", label = "Training")
-plt.plot(x, y_validation, "r", label = "Validation")
-plt.xticks(x)
+    acc_ax.plot(x, y_training, "b", label = "Training")
+acc_ax.plot(x, y_validation, "r", label = "Validation")
+# plt.xticks(x)
 plt.xlabel("Epoch")
 plt.ylabel("Accuracy (%)")
-plt.grid(True)
-plt.legend()
+acc_ax.grid(True)
+acc_fig.legend()
 
-# Save the learning curve and the model
+# Plot the average loss over the epochs
+loss_fig = plt.figure()
+loss_ax = loss_fig.gca()
+loss_ax.plot(x, y_loss, "b")
+plt.xlabel("Epoch")
+plt.ylabel("Average loss")
+loss_ax.grid(True)
+
+# Save the diagrams and the model
 timestamp = datetime.datetime.now()
 identifier = "model_{}_{}_{}_{}_{}".format(timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute)
 
@@ -133,9 +151,9 @@ directory = "models"
 if not os.path.exists(directory):
     os.makedirs(directory)
 
-plt.savefig("{}/{}.lc.png".format(directory, identifier))
+acc_fig.savefig("{}/{}.lc.png".format(directory, identifier))
+loss_fig.savefig("{}/{}.loss.png".format(directory, identifier))
 
 model_path = "{}/{}".format(directory, identifier)
 torch.save(net.state_dict(), model_path)
 print("Model parameters saved to {}.".format(model_path))
-
