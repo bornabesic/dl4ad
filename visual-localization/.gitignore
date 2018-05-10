@@ -1,4 +1,5 @@
 .vscode/
 __pycache__/
 DeepLoc/
+DeepLoc
 deeploc.tar.gz
