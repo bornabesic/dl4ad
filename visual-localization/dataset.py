@@ -1,7 +1,7 @@
 
 import os.path
 from torch.utils.data import Dataset
-import cv2
+from PIL import Image
 
 from utils import read_table
 
@@ -32,5 +32,5 @@ class DeepLoc(Dataset):
 
     def __getitem__(self, idx):
         image_path, pose = self.data[idx]
-        image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+        image = Image.open(image_path)
         return (image, pose)
