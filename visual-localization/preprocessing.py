@@ -1,22 +1,25 @@
 
-import cv2
+from torchvision.transforms import RandomCrop, Resize
 
-# TODO Rescale the image so the smallest dimension is 256 pixels
-class Rescale:
+# Rescale the image so that the smaller edge of the image
+# is matched to 'smaller_size'.
+class RescaleSmaller:
 
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
+    def __init__(self, smaller_size):
+        self.transform = Resize(smaller_size)
 
     def __call__(self, image):
-        return image
+        return self.transform(image)
 
-# TODO Extract random 224 x 224 crops
+# Extract ’number’ random crops of size ’width’ x ’height’.
 class RandomCrops:
 
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
+    def __init__(self, width, height, number):
+        self.number = number
+        self.transform = RandomCrop(size = (height, width))
 
     def __call__(self, image):
-        return image
+        crops = []
+        for _ in range(self.number):
+            crops.append(self.transform(image))
+        return crops
