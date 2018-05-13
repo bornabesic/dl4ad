@@ -1,5 +1,4 @@
-
-import cv2
+#!/usr/bin/env python3
 
 # TODO Change brightness
 class ChangeBrightness:
@@ -61,3 +60,35 @@ class RegionDropout:
 
     def __call__(self, image):
         return image
+
+if __name__ == "__main__":
+    from dataset import DeepLoc
+
+    # Load the dataset
+    train_data = DeepLoc("train")
+    test_data = DeepLoc("test")
+
+    # Define the augmentations
+    augmentations = [
+        # ChangeBrightness(),
+        # ChangeContrast(),
+        # GaussianBlur(),
+        # GaussianNoise(),
+        # SaltAndPepperNoise(),
+        # RegionDropout()
+    ]
+
+    for augment in augmentations:
+
+        # Iterate the train data
+        for image, pose in train_data:
+            # Augment the image
+            image_augmented = augment(image)
+            # TODO Save the image (depends on the lib)
+
+        # Iterate the train data
+        for image, pose in test_data:
+            # Augment the image
+            image_augmented = augment(image)
+
+            # TODO Save the image (depends on the lib)
