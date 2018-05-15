@@ -54,10 +54,12 @@ class GaussianNoise:
         self.std = std
 
     def __call__(self, image):
-        image_array = np.asarray(image)
-        noise = self.std * np.random.randn(np.shape(image_array)[0],np.shape(image_array)[1],np.shape(image_array)[2]) + self.mean
-        image_array = image_array + noise
-        image = Image.fromarray(np.uint8(image_array))
+        image_array = np.asarray(image, dtype=np.float64)
+        image_array.setflags(write=1)
+        height, width, channels = image_array.shape
+        noise = np.random.normal(loc = self.mean, scale = self.std, size = (height, width, channels - 1))
+        image_array[:, :, 0:3] += noise
+        image = Image.fromarray(np.uint8(np.clip(image_array, 0, 255)))
         return image
 
 # TODO Add salt-and-pepper noise
@@ -81,7 +83,7 @@ class SaltAndPepperNoise:
         while counter > 1:
             x = np.random.randint(0,columns)
             y = np.random.randint(0,rows)
-            image_array[x,y,:] = 255
+            image_array[x,y,:] = (0, 0, 0, 255)
             counter = counter -1
 
         # Set randomly chosen single pixels to black in a loop
@@ -141,6 +143,8 @@ if __name__ == "__main__":
     # Make directory structure
     train_path = os.path.join("DeepLocAugmented", "train")
     test_path = os.path.join("DeepLocAugmented", "test")
+    poses_train = os.path.join(train_path, "poses.txt")
+    poses_test = os.path.join(train_path, "poses.txt")
     os.makedirs(train_path, exist_ok = True)
     os.makedirs(test_path, exist_ok = True)
 
@@ -161,6 +165,8 @@ if __name__ == "__main__":
     # Iterate the train data
     i = 0
     for image, pose in train_data:
+        x, y, z, qw, qx, qy, qz = pose
+
         for augment in augmentations:
             image_name = "Image{}.png".format(i)
             image_path = os.path.join(train_path, image_name)
@@ -172,9 +178,15 @@ if __name__ == "__main__":
             image_augmented.save(image_path)
             i += 1
 
+            # Write to poses.txt
+            with open(poses_train, "a", encoding = "utf-8") as f:
+                print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(image_path, x, y, z, qw, qx, qy, qz), file = f)
+
     # Iterate the test data
     i = 0
     for image, pose in test_data:
+        x, y, z, qw, qx, qy, qz = pose
+
         for augment in augmentations:
             image_name = "Image{}.png".format(i)
             image_path = os.path.join(test_path, image_name)
@@ -185,3 +197,7 @@ if __name__ == "__main__":
             # Save the image
             image_augmented.save(image_path)
             i += 1
+
+            # Write to poses.txt
+            with open(poses_test, "a", encoding = "utf-8") as f:
+                print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(image_path, x, y, z, qw, qx, qy, qz), file = f)
