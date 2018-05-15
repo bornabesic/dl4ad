@@ -4,16 +4,24 @@ from PIL import ImageEnhance
 from PIL import Image
 from PIL import ImageFilter
 import numpy as np
+import os
+
+# Identity transformation
+# (Returns the original image)
+class Identity:
+
+    def __call__(self, image):
+        return image
 
 # Change brightness
 class ChangeBrightness:
     # A value between 0.1 and 4 makes sense
-    def __init__(self, value):
-        self.value = value
+    def __init__(self, multiplier):
+        self.multiplier = multiplier
 
     def __call__(self, image):
         enhancer = ImageEnhance.Brightness(image)
-        image = enhancer.enhance(self.value)
+        image = enhancer.enhance(self.multiplier)
         return image
 
 # Change contrast
@@ -30,13 +38,6 @@ class ChangeContrast:
 
 # Add Gaussian blur
 class GaussianBlur:
-
-    # def __init__(self, kernel_width, kernel_height, mean, std_x, std_y):
-    #     self.kernel_width = kernel_width
-    #     self.kernel_height = kernel_height
-    #     self.mean = mean
-    #     self.std_x = std_x
-    #     self.std_y = std_y
 
     def __init__(self, radius):
         self.radius = radius
@@ -122,7 +123,7 @@ class RegionDropout:
             y_end = y + boxhight
             while x < columns and x < x_end:
                 while y < rows and y < y_end:
-                    image_array[x,y,:] = 0
+                    image_array[x,y,:] = (0, 0, 0, 255)
                     y = y + 1
                 x = x + 1
                 y = y_start
@@ -134,32 +135,53 @@ if __name__ == "__main__":
     from dataset import DeepLoc
 
     # Load the dataset
-    train_data = DeepLoc("train")
-    test_data = DeepLoc("test")
+    train_data = DeepLoc("train", preprocess = None)
+    test_data = DeepLoc("test", preprocess = None)
+
+    # Make directory structure
+    train_path = os.path.join("DeepLocAugmented", "train")
+    test_path = os.path.join("DeepLocAugmented", "test")
+    os.makedirs(train_path, exist_ok = True)
+    os.makedirs(test_path, exist_ok = True)
 
     # Define the augmentations
     augmentations = [
-        # ChangeBrightness(),
-        # ChangeContrast(),
-        # GaussianBlur(),
-        # GaussianNoise(),
-        # SaltAndPepperNoise(),
-        # RegionDropout()
+        Identity(),
+        ChangeBrightness(0.5),
+        ChangeBrightness(2),
+        ChangeContrast(0.5),
+        ChangeContrast(2),
+        GaussianBlur(2),
+        GaussianBlur(3),
+        GaussianNoise(0, 10),
+        SaltAndPepperNoise(0.1),
+        RegionDropout(0.01, 10),
     ]
 
-    for augment in augmentations:
+    # Iterate the train data
+    i = 0
+    for image, pose in train_data:
+        for augment in augmentations:
+            image_name = "Image{}.png".format(i)
+            image_path = os.path.join(train_path, image_name)
 
-        # Iterate the train data
-        for image, pose in train_data:
             # Augment the image
             image_augmented = augment(image)
             
-            # TODO Save the image (depends on the lib)
-            # image_augmented.save("savetest.jpg")
+            # Save the image
+            image_augmented.save(image_path)
+            i += 1
 
-        # Iterate the test data
-        for image, pose in test_data:
+    # Iterate the test data
+    i = 0
+    for image, pose in test_data:
+        for augment in augmentations:
+            image_name = "Image{}.png".format(i)
+            image_path = os.path.join(test_path, image_name)
+
             # Augment the image
             image_augmented = augment(image)
 
-            # TODO Save the image (depends on the lib)
+            # Save the image
+            image_augmented.save(image_path)
+            i += 1
