@@ -175,6 +175,7 @@ if __name__ == "__main__":
             image_augmented = augment(image)
             
             # Save the image
+            print(image_path)
             image_augmented.save(image_path)
             i += 1
 
@@ -195,6 +196,7 @@ if __name__ == "__main__":
             image_augmented = augment(image)
 
             # Save the image
+            print(image_path)
             image_augmented.save(image_path)
             i += 1
 
