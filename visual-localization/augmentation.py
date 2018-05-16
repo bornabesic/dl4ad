@@ -170,7 +170,7 @@ if __name__ == "__main__":
         x, y, z, qw, qx, qy, qz = pose
 
         for augment in augmentations:
-            image_name = "Image{}.png".format(i)
+            image_name = "Image{}.jpeg".format(i)
             image_path = os.path.join(train_path, image_name)
 
             # Augment the image
@@ -178,7 +178,7 @@ if __name__ == "__main__":
             
             # Save the image
             print(image_path)
-            image_augmented.save(image_path)
+            image_augmented.save(image_path, format = "JPEG")
             i += 1
 
             # Write to poses.txt
@@ -191,7 +191,7 @@ if __name__ == "__main__":
         x, y, z, qw, qx, qy, qz = pose
 
         for augment in augmentations:
-            image_name = "Image{}.png".format(i)
+            image_name = "Image{}.jpeg".format(i)
             image_path = os.path.join(test_path, image_name)
 
             # Augment the image
@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
             # Save the image
             print(image_path)
-            image_augmented.save(image_path)
+            image_augmented.save(image_path, format = "JPEG")
             i += 1
 
             # Write to poses.txt
