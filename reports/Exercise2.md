@@ -27,7 +27,7 @@ Kernel size: 5 x 5
 ![](Image6.jpeg)
 
 ### Gaussian noise
-Mean: 0
+Mean: 0 <br/>
 Standard deviation: 10
 ![](Image7.jpeg)
 
@@ -36,7 +36,7 @@ Percentage of noisy pixels: 10%
 ![](Image8.jpeg)
 
 ### Region dropout
-Region size: 1% of the image
+Region size: 1% of the image size <br/>
 Number of regions: 10
 ![](Image9.jpeg)
 
