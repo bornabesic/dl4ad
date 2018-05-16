@@ -6,6 +6,12 @@ from PIL import ImageFilter
 import numpy as np
 import os
 
+# Convert image from RGBA to RGB
+class ToRGB:
+
+    def __call__(self, image):
+        return image.convert("RGB")
+
 # Identity transformation
 # (Returns the original image)
 class Identity:
@@ -58,7 +64,7 @@ class GaussianNoise:
         image_array.setflags(write=1)
         height, width, channels = image_array.shape
         noise = np.random.normal(loc = self.mean, scale = self.std, size = (height, width, channels - 1))
-        image_array[:, :, 0:3] += noise
+        image_array[:, :, 0:2] += noise
         image = Image.fromarray(np.uint8(np.clip(image_array, 0, 255)))
         return image
 
@@ -83,7 +89,7 @@ class SaltAndPepperNoise:
         while counter > 1:
             x = np.random.randint(0,columns)
             y = np.random.randint(0,rows)
-            image_array[x,y,:] = (0, 0, 0, 255)
+            image_array[x,y,:] = (255, 255, 255)
             counter = counter -1
 
         # Set randomly chosen single pixels to black in a loop
@@ -91,7 +97,7 @@ class SaltAndPepperNoise:
         while counter > 1:
             x = np.random.randint(0,columns)
             y = np.random.randint(0,rows)
-            image_array[x,y,:] = 0
+            image_array[x,y,:] = (0, 0, 0)
             counter = counter -1
 
         # Form an image from an array 
@@ -125,7 +131,7 @@ class RegionDropout:
             y_end = y + boxhight
             while x < columns and x < x_end:
                 while y < rows and y < y_end:
-                    image_array[x,y,:] = (0, 0, 0, 255)
+                    image_array[x,y,:] = (0, 0, 0)
                     y = y + 1
                 x = x + 1
                 y = y_start
@@ -137,8 +143,8 @@ if __name__ == "__main__":
     from dataset import DeepLoc
 
     # Load the dataset
-    train_data = DeepLoc("train", preprocess = None)
-    test_data = DeepLoc("test", preprocess = None)
+    train_data = DeepLoc("train", preprocess = ToRGB())
+    test_data = DeepLoc("test", preprocess = ToRGB())
 
     # Make directory structure
     train_path = os.path.join("DeepLocAugmented", "train")
