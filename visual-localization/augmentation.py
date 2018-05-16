@@ -6,11 +6,7 @@ from PIL import ImageFilter
 import numpy as np
 import os
 
-# Convert image from RGBA to RGB
-class ToRGB:
-
-    def __call__(self, image):
-        return image.convert("RGB")
+from preprocessing import ToRGB
 
 # Identity transformation
 # (Returns the original image)
