@@ -1,4 +1,5 @@
-# Report
+# Exercise 1 report
+
 ## Training
 ![](model_2018_5_4_10_19.loss.png)
 ![](model_2018_5_4_10_19.lc.png)
