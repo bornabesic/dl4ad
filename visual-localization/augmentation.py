@@ -64,7 +64,7 @@ class GaussianNoise:
         image = Image.fromarray(np.uint8(np.clip(image_array, 0, 255)))
         return image
 
-# TODO Add salt-and-pepper noise
+# Add salt-and-pepper noise
 class SaltAndPepperNoise:
 
     def __init__(self, percentage):
@@ -100,7 +100,7 @@ class SaltAndPepperNoise:
         image = Image.fromarray(np.uint8(image_array))
         return image
 
-# TODO Region dropout
+# Region dropout
 # (mask out random rectangles, each taking ~1% of the image)
 class RegionDropout:
 
