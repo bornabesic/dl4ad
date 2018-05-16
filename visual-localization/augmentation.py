@@ -74,7 +74,7 @@ class SaltAndPepperNoise:
         # Convert image to array for changing a single pixel
         image_array = np.asarray(image)
         image_array.setflags(write=1)
-        
+
         # Get information about image-size
         columns = np.shape(image_array)[0]
         rows = np.shape(image_array)[1]
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     train_path = os.path.join("DeepLocAugmented", "train")
     test_path = os.path.join("DeepLocAugmented", "test")
     poses_train = os.path.join(train_path, "poses.txt")
-    poses_test = os.path.join(train_path, "poses.txt")
+    poses_test = os.path.join(test_path, "poses.txt")
     os.makedirs(train_path, exist_ok = True)
     os.makedirs(test_path, exist_ok = True)
 
@@ -175,7 +175,7 @@ if __name__ == "__main__":
 
             # Augment the image
             image_augmented = augment(image)
-            
+
             # Save the image
             print(image_path)
             image_augmented.save(image_path, format = "JPEG")
