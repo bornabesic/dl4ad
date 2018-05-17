@@ -12,7 +12,6 @@ class DeepLoc(Dataset):
 
     def __init__(self, mode, preprocess = default_preprocessing):
         self.data = []
-        self.size = 0
         self.preprocess = preprocess
 
         if mode not in ("train", "test"):
@@ -41,11 +40,10 @@ class DeepLoc(Dataset):
             image = self.preprocess(image)
         return (image, pose)
 
-class DeepLocAugmented(Dataset):
+class DeepLocAugmented(DeepLoc):
 
     def __init__(self, mode, preprocess = default_preprocessing):
         self.data = []
-        self.size = 0
         self.preprocess = preprocess
 
         if mode not in ("train", "test"):
@@ -62,16 +60,6 @@ class DeepLocAugmented(Dataset):
                 self.data.append((image_path, pose))
 
         self.size = len(self.data)
-
-    def __len__(self):
-        return self.size
-
-    def __getitem__(self, idx):
-        image_path, pose = self.data[idx]
-        image = Image.open(image_path)
-        if self.preprocess is not None:
-            image = self.preprocess(image)
-        return (image, pose)
 
 def make_train_valid_loader(data, valid_percentage, batch_size = 4, num_workers = 1, pin_memory = True):
     num_samples = len(data)
