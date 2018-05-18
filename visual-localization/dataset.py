@@ -1,6 +1,7 @@
 
 import os.path
 import numpy as np
+import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from PIL import Image
@@ -38,7 +39,12 @@ class DeepLoc(Dataset):
         image = Image.open(image_path)
         if self.preprocess is not None:
             image = self.preprocess(image)
-        return (image, pose)
+
+        x, y, z, qw, qx, qy, qz = pose
+
+        x = torch.tensor([x, y, z]) # 3D camera location (vector)
+        q = torch.tensor([qw, qx, qy, qz]) # Rotation (quaternion)
+        return (image, x, q)
 
 class DeepLocAugmented(DeepLoc):
 
