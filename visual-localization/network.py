@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from modules import Inception
+
 # Taken from:
 # https://github.com/kuangliu/pytorch-cifar/blob/master/models/googlenet.py
 
