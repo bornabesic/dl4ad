@@ -18,4 +18,12 @@ net.cuda()
 
 # Training phase
 for images, xs, qs in train_loader:
-    ps = torch.cat([xs, qs], dim = 1)
+    ps = torch.cat([xs, qs], dim = 1).cuda()
+    images = images.cuda()
+
+    # TODO Predict the pose
+    ps_prediction = net(images)
+    print(ps_prediction)
+    input()
+
+    # TODO Do a backpropagation step
