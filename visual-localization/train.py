@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import torch
+import torch.nn as nn
+import torch.optim as optim
 
 from dataset import DeepLocAugmented, make_train_valid_loader, make_test_loader
 from network import parameters, PoseNet
@@ -22,17 +24,30 @@ print("Trainable parameters: {}".format(trainable_params))
 print("Total parameters: {}".format(total_params))
 print("Memory requirement: {} MiB".format(((total_params * 8) / 1024) / 1024))
 
-# Training phase
-for images, xs, qs in train_loader:
-    ps = torch.cat([xs, qs], dim = 1).cuda()
-    images = images.cuda()
+# TODO Optimizer
+optimizer = optim.SGD(net.parameters(), lr = 1e-5, momentum = 0.9)
 
-    # TODO Predict the pose
-    ps_out1, ps_out2, ps_out3 = net(images)
-    print(ps)
-    print(ps_out1)
-    print(ps_out2)
-    print(ps_out3)
-    input()
+# TODO Loss function
+criterion = nn.MSELoss()
 
-    # TODO Do a backpropagation step
+# TODO Training phase
+for epoch in range(100):
+
+    net.train()
+    for images, xs, qs in train_loader:
+        ps = torch.cat([xs, qs], dim = 1).cuda()
+        images = images.cuda()
+
+        # TODO Predict the pose
+        ps_out1, ps_out2, ps_out3 = net(images)
+        loss1 = criterion(ps_out1, ps)
+        loss2 = criterion(ps_out2, ps)
+        loss3 = criterion(ps_out3, ps)
+        print("Loss: {}".format(loss3))
+
+        # TODO Do a backpropagation step
+        optimizer.zero_grad()
+        loss1.backward(retain_graph = True)
+        loss2.backward(retain_graph = True)
+        loss3.backward()
+        optimizer.step()
