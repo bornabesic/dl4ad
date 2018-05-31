@@ -7,6 +7,12 @@ import torch.optim as optim
 from dataset import DeepLocAugmented, make_train_valid_loader, make_test_loader
 from network import parameters, PoseNet
 
+# Device - use CPU is CUDA is not available
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+
 # Load the dataset
 train_data = DeepLocAugmented("train")
 print("Training set size: {} samples".format(len(train_data)))
@@ -16,7 +22,7 @@ train_loader, valid_loader = make_train_valid_loader(train_data, valid_percentag
 
 # Define the model
 net = PoseNet()
-net.cuda()
+net.to(device = device)
 
 # Check the number of parameters
 trainable_params, total_params = parameters(net)
@@ -35,8 +41,8 @@ for epoch in range(100):
 
     net.train()
     for images, xs, qs in train_loader:
-        ps = torch.cat([xs, qs], dim = 1).cuda()
-        images = images.cuda()
+        ps = torch.cat([xs, qs], dim = 1).to(device = device)
+        images = images.to(device = device)
 
         # TODO Predict the pose
         ps_out1, ps_out2, ps_out3 = net(images)
