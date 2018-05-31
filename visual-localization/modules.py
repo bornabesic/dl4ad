@@ -1,6 +1,14 @@
 import torch
 import torch.nn as nn
 
+class Flatten(nn.Module):
+
+    def forward(self, x):
+        # print("Original:", x.size())
+        flattened = x.view(x.size(0), -1)
+        # print("Flattened:", flattened.size())
+        return flattened
+
 # Modified implementation originally taken from:
 # https://github.com/kuangliu/pytorch-cifar/blob/master/models/googlenet.py
 
@@ -32,7 +40,7 @@ class Inception(nn.Module):
         self.branch2 = nn.Sequential(
             # 1 x 1
             nn.Conv2d(in_channels, conv3x3_in_channels, kernel_size = 1),
-            nn.BatchNorm2d(conv3x3_in_channels),
+            # nn.BatchNorm2d(conv3x3_in_channels),
             nn.ReLU(True),
             # 3 x 3
             nn.Conv2d(conv3x3_in_channels, conv3x3_out_channels, kernel_size = 3, padding = 1),
@@ -44,7 +52,7 @@ class Inception(nn.Module):
         self.branch3 = nn.Sequential(
             # 1 x 1
             nn.Conv2d(in_channels, conv5x5_in_channels, kernel_size = 1, padding = 1),
-            nn.BatchNorm2d(conv5x5_in_channels),
+            # nn.BatchNorm2d(conv5x5_in_channels),
             nn.ReLU(True),
             # 5 x 5
             nn.Conv2d(conv5x5_in_channels, conv5x5_out_channels, kernel_size = 5, padding = 1),
