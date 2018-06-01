@@ -9,7 +9,6 @@ class Customized_Loss(nn.Module):
         self.beta = beta
 
     def forward(self, output, target):
-        _assert_no_grad(target)
         Pos = target[:, :3]
         Quat = target[:, 3:]
         Pos_est = output[:,:3]
