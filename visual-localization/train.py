@@ -6,6 +6,7 @@ import torch.optim as optim
 
 from dataset import DeepLocAugmented, make_train_valid_loader, make_test_loader
 from network import parameters, PoseNet
+from customized_loss import Customized_Loss
 
 # Device - use CPU is CUDA is not available
 if torch.cuda.is_available():
@@ -18,7 +19,7 @@ train_data = DeepLocAugmented("train")
 print("Training set size: {} samples".format(len(train_data)))
 
 # Generate the data loaders
-train_loader, valid_loader = make_train_valid_loader(train_data, valid_percentage = 0.2)
+train_loader, valid_loader = make_train_valid_loader(train_data, valid_percentage = 0.2, batch_size = 16)
 
 # Define the model
 net = PoseNet()
@@ -34,7 +35,7 @@ print("Memory requirement: {} MiB".format(((total_params * 8) / 1024) / 1024))
 optimizer = optim.SGD(net.parameters(), lr = 1e-5, momentum = 0.9)
 
 # TODO Loss function
-criterion = nn.MSELoss()
+criterion = Customized_Loss()
 
 # TODO Training phase
 for epoch in range(100):
