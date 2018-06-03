@@ -47,7 +47,6 @@ criterion = Customized_Loss(beta = BETA)
 # Plot variables
 x = []
 y_training = []
-y_loss = []
 y_loss_valid = []
 
 # Time measuring
@@ -93,18 +92,15 @@ for epoch in range(100):
     # Save the average epoch loss
     avg_loss = total_loss / num_iters
     print("Average training loss: {}".format(avg_loss))
-    y_loss.append(avg_loss)
 
     # Evaluate on the validation set
-    avg_loss_valid = evaluate(net, valid_loader)
+    avg_loss_valid = evaluate(net, criterion, valid_loader, device)
     y_loss_valid.append(avg_loss_valid)
     print("Average validation loss: {}".format(avg_loss_valid))
 
 # Plot the average loss over the epochs
 loss_fig = plt.figure()
-loss_fig.hold(True)
 loss_ax = loss_fig.gca()
-loss_ax.plot(x, y_loss, "b", label = "Training")
 loss_ax.plot(x, y_loss_valid, "r", label = "Validation")
 plt.xlabel("Epoch")
 plt.ylabel("Average loss")
