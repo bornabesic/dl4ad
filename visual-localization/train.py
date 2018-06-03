@@ -9,7 +9,7 @@ import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 
-from dataset import DeepLocAugmented, make_train_valid_loader, make_test_loader
+from dataset import DeepLocAugmented, make_train_valid_loader, evaluate
 from network import parameters, PoseNet
 from customized_loss import Customized_Loss
 from utils import print_torch_cuda_mem_usage, Stopwatch
@@ -48,6 +48,7 @@ criterion = Customized_Loss(beta = BETA)
 x = []
 y_training = []
 y_loss = []
+y_loss_valid = []
 
 # Time measuring
 stopwatch = Stopwatch()
@@ -91,16 +92,24 @@ for epoch in range(100):
 
     # Save the average epoch loss
     avg_loss = total_loss / num_iters
-    print("Average loss: {}".format(avg_loss))
+    print("Average training loss: {}".format(avg_loss))
     y_loss.append(avg_loss)
+
+    # Evaluate on the validation set
+    avg_loss_valid = evaluate(net, valid_loader)
+    y_loss_valid.append(avg_loss_valid)
+    print("Average validation loss: {}".format(avg_loss_valid))
 
 # Plot the average loss over the epochs
 loss_fig = plt.figure()
+loss_fig.hold(True)
 loss_ax = loss_fig.gca()
-loss_ax.plot(x, y_loss, "b")
+loss_ax.plot(x, y_loss, "b", label = "Training")
+loss_ax.plot(x, y_loss_valid, "r", label = "Validation")
 plt.xlabel("Epoch")
 plt.ylabel("Average loss")
 loss_ax.grid(True)
+loss_fig.legend()
 
 # Save the diagrams and the model
 timestamp = datetime.datetime.now()

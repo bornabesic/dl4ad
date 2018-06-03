@@ -102,3 +102,16 @@ def make_test_loader(data, batch_size = 4, shuffle = True, num_workers = 1, pin_
         shuffle = shuffle
     )
 
+def evaluate(model, criterion, loader, device):
+    model.eval()
+    total_loss = 0
+    num_iters = 0
+    for images, ps in loader:
+        ps = ps.to(device = device)
+        images = images.to(device = device)
+        ps_out1, ps_out2, ps_out3 = net(images)
+        loss3 = criterion(ps_out3, ps)
+        total_loss += loss3.item() # Important to use .item() !
+        num_iters += 1
+    avg_loss = total_loss / num_iters
+    return avg_loss
