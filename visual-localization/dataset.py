@@ -42,9 +42,10 @@ class DeepLoc(Dataset):
 
         x, y, z, qw, qx, qy, qz = pose
 
-        x = torch.tensor([x, y, z]) # 3D camera location (vector)
-        q = torch.tensor([qw, qx, qy, qz]) # Rotation (quaternion)
-        return (image, x, q)
+        # x = torch.tensor([x, y, z]) # 3D camera location (vector)
+        # q = torch.tensor([qw, qx, qy, qz]) # Rotation (quaternion)
+        p = torch.tensor([x, y, z, qw, qx, qy, qz])
+        return (image, p)
 
 class DeepLocAugmented(DeepLoc):
 
@@ -100,3 +101,4 @@ def make_test_loader(data, batch_size = 4, shuffle = True, num_workers = 1, pin_
         pin_memory = pin_memory,
         shuffle = shuffle
     )
+
