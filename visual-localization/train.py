@@ -14,6 +14,10 @@ from network import parameters, PoseNet
 from customized_loss import Customized_Loss
 from utils import print_torch_cuda_mem_usage, Stopwatch
 
+# Parameters
+LOSS_BETA = 250
+EPOCHS = 50
+
 # Device - use CPU is CUDA is not available
 if torch.cuda.is_available():
     device = torch.device("cuda")
@@ -25,7 +29,7 @@ train_data = DeepLocAugmented("train")
 print("Training set size: {} samples".format(len(train_data)))
 
 # Generate the data loaders
-train_loader, valid_loader = make_train_valid_loader(train_data, valid_percentage = 0.2)
+train_loader, valid_loader = make_train_valid_loader(train_data, valid_percentage = 0.2, batch_size = 16)
 
 # Define the model
 net = PoseNet()
@@ -41,8 +45,7 @@ print("Memory requirement: {} MiB".format(((total_params * 8) / 1024) / 1024))
 optimizer = optim.SGD(net.parameters(), lr = 1e-5, momentum = 0.9)
 
 # Loss function
-BETA = 250
-criterion = Customized_Loss(beta = BETA)
+criterion = Customized_Loss(beta = LOSS_BETA)
 
 # Plot variables
 x = []
@@ -50,17 +53,19 @@ y_training = []
 y_loss_valid = []
 
 # Time measuring
-stopwatch = Stopwatch()
+stopwatch_train = Stopwatch()
+stopwatch_epoch = Stopwatch()
 
 # TODO Training phase
-for epoch in range(100):
+stopwatch_train.start()
+for epoch in range(EPOCHS):
     x.append(epoch + 1)
     print("[Epoch {}]".format(epoch + 1))
 
     net.train()
     total_loss = 0
     num_iters = 0
-    stopwatch.start()
+    stopwatch_epoch.start()
     for images, ps in train_loader:
         ps = ps.to(device = device)
         images = images.to(device = device)
@@ -85,7 +90,7 @@ for epoch in range(100):
             print("{:6.2f} %".format(num_iters * 100 / len(train_loader)), end = "\r")
 
     # Print some stats
-    elapsed_time = stopwatch.stop()
+    elapsed_time = stopwatch_epoch.stop()
     print("Epoch time: {:0.2f} minutes".format(elapsed_time))
     print_torch_cuda_mem_usage()
 
@@ -98,6 +103,11 @@ for epoch in range(100):
     y_loss_valid.append(avg_loss_valid)
     print("Average validation loss: {}".format(avg_loss_valid))
 
+# Elapsed training time
+print("-----------------")
+elapsed_time = stopwatch_train.stop()
+print("Training time: {:0.2f} minutes".format(elapsed_time))
+
 # Plot the average loss over the epochs
 loss_fig = plt.figure()
 loss_ax = loss_fig.gca()
@@ -109,7 +119,7 @@ loss_fig.legend()
 
 # Save the diagrams and the model
 timestamp = datetime.datetime.now()
-identifier = "model_{}_{}_{}_{}_{}_{}".format(BETA, timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute)
+identifier = "model_{}_{}_{}_{}_{}_{}".format(LOSS_BETA, timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute)
 
 directory = "models"
 if not os.path.exists(directory):
