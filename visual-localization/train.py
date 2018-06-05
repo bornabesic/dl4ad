@@ -2,6 +2,7 @@
 
 import os
 import datetime
+import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -14,9 +15,64 @@ from network import parameters, PoseNet
 from customized_loss import Customized_Loss
 from utils import print_torch_cuda_mem_usage, Stopwatch
 
+# Parse CLI arguments
+args_parser = argparse.ArgumentParser(
+	formatter_class = argparse.ArgumentDefaultsHelpFormatter
+)
+
+args_parser.add_argument(
+	"--learning_rate",
+	type = float,
+	help = "SGD learning rate",
+    default = 1e-5
+)
+
+args_parser.add_argument(
+	"--momentum",
+	type = float,
+	help = "SGD momentum",
+    default = 0.9
+)
+
+args_parser.add_argument(
+	"--loss_beta",
+	type = float,
+	help = "Beta parameter used with the loss function",
+    default = 250
+)
+
+args_parser.add_argument(
+	"--batch_size",
+	type = int,
+	help = "Batch size",
+    default = 16
+)
+
+args_parser.add_argument(
+	"--epochs",
+	type = int,
+	help = "Number of training epochs",
+    default = 50
+)
+
+args_parser.add_argument(
+	"--use_model",
+	type = str,
+	help = "Path to the model to continue training on"
+)
+
+args = args_parser.parse_args()
+
 # Parameters
-LOSS_BETA = 250
-EPOCHS = 50
+
+print(args)
+
+LEARNING_RATE = args.learning_rate
+MOMENTUM = args.momentum
+LOSS_BETA = args.loss_beta
+BATCH_SIZE = args.batch_size
+EPOCHS = args.epochs
+MODEL_PATH = args.use_model
 
 # Device - use CPU is CUDA is not available
 if torch.cuda.is_available():
@@ -31,21 +87,24 @@ print("Train set size: {} samples".format(len(train_data)))
 print("Validation set size: {} samples".format(len(valid_data)))
 
 # Generate the data loaders
-train_loader = make_loader(train_data, batch_size = 16)
+train_loader = make_loader(train_data, batch_size = BATCH_SIZE)
 valid_loader = make_loader(valid_data)
 
 # Define the model
 net = PoseNet()
+if MODEL_PATH is not None:
+    print("Using {}.".format(MODEL_PATH))
+    net.load_state_dict(torch.load(MODEL_PATH))
 net.to(device = device)
 
 # Check the number of parameters
 trainable_params, total_params = parameters(net)
 print("Trainable parameters: {}".format(trainable_params))
 print("Total parameters: {}".format(total_params))
-print("Memory requirement: {} MiB".format(((total_params * 8) / 1024) / 1024))
+print("Memory requirement: {:.2f} MiB".format(((total_params * 4) / 1024) / 1024))
 
 # TODO Optimizer
-optimizer = optim.SGD(net.parameters(), lr = 1e-5, momentum = 0.9)
+optimizer = optim.SGD(net.parameters(), lr = LEARNING_RATE, momentum = MOMENTUM)
 
 # Loss function
 criterion = Customized_Loss(beta = LOSS_BETA)
