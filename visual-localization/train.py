@@ -9,7 +9,7 @@ import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 
-from dataset import DeepLocAugmented, make_train_valid_loader, evaluate
+from dataset import DeepLocAugmented, make_loader, evaluate
 from network import parameters, PoseNet
 from customized_loss import Customized_Loss
 from utils import print_torch_cuda_mem_usage, Stopwatch
@@ -26,10 +26,13 @@ else:
 
 # Load the dataset
 train_data = DeepLocAugmented("train")
-print("Training set size: {} samples".format(len(train_data)))
+valid_data = DeepLocAugmented("validation")
+print("Train set size: {} samples".format(len(train_data)))
+print("Validation set size: {} samples".format(len(valid_data)))
 
 # Generate the data loaders
-train_loader, valid_loader = make_train_valid_loader(train_data, valid_percentage = 0.2, batch_size = 16)
+train_loader = make_loader(train_data, batch_size = 16)
+valid_loader = make_loader(valid_data)
 
 # Define the model
 net = PoseNet()
@@ -55,6 +58,16 @@ y_loss_valid = []
 # Time measuring
 stopwatch_train = Stopwatch()
 stopwatch_epoch = Stopwatch()
+
+# Prepare environment for the snapshot
+timestamp = datetime.datetime.now()
+identifier = "model_{}_{}_{}_{}_{}_{}".format(LOSS_BETA, timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute)
+
+directory = "models"
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+model_path = "{}/{}".format(directory, identifier)
 
 # TODO Training phase
 stopwatch_train.start()
@@ -103,30 +116,22 @@ for epoch in range(EPOCHS):
     y_loss_valid.append(avg_loss_valid)
     print("Average validation loss: {}".format(avg_loss_valid))
 
+    # Plot the average loss over the epochs
+    loss_fig = plt.figure()
+    loss_ax = loss_fig.gca()
+    loss_ax.plot(x, y_loss_valid, "r", label = "Validation")
+    plt.xlabel("Epoch")
+    plt.ylabel("Average loss")
+    loss_ax.grid(True)
+    loss_fig.legend()
+
+    loss_fig.savefig("{}/{}.loss.png".format(directory, identifier))
+
+    # Save the model
+    torch.save(net.state_dict(), model_path)
+    print("Model parameters saved to {}.".format(model_path))
+
 # Elapsed training time
 print("-----------------")
 elapsed_time = stopwatch_train.stop()
 print("Training time: {:0.2f} minutes".format(elapsed_time))
-
-# Plot the average loss over the epochs
-loss_fig = plt.figure()
-loss_ax = loss_fig.gca()
-loss_ax.plot(x, y_loss_valid, "r", label = "Validation")
-plt.xlabel("Epoch")
-plt.ylabel("Average loss")
-loss_ax.grid(True)
-loss_fig.legend()
-
-# Save the diagrams and the model
-timestamp = datetime.datetime.now()
-identifier = "model_{}_{}_{}_{}_{}_{}".format(LOSS_BETA, timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute)
-
-directory = "models"
-if not os.path.exists(directory):
-    os.makedirs(directory)
-
-loss_fig.savefig("{}/{}.loss.png".format(directory, identifier))
-
-model_path = "{}/{}".format(directory, identifier)
-torch.save(net.state_dict(), model_path)
-print("Model parameters saved to {}.".format(model_path))
