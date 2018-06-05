@@ -144,7 +144,7 @@ if __name__ == "__main__":
     test_data = DeepLoc("test", preprocess = ToRGB())
 
     # Train / validation split of the training dataset
-    train_gen, valid_gen = make_train_valid_generator(train_data, valid_percentage = 0.2,)
+    train_gen, valid_gen = make_train_valid_generator(train_data, valid_percentage = 0.2)
 
     # Make directory structure
     train_path = os.path.join("DeepLocAugmented", "train")
