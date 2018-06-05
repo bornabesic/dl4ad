@@ -53,8 +53,8 @@ class DeepLocAugmented(DeepLoc):
         self.data = []
         self.preprocess = preprocess
 
-        if mode not in ("train", "test"):
-            raise ValueError("Only 'train' and 'test' modes are available.")
+        if mode not in ("train", "validation", "test"):
+            raise ValueError("Only 'train', 'validation' and 'test' modes are available.")
 
         mode_path = os.path.join("DeepLocAugmented", mode)
         poses_path = os.path.join(mode_path, "poses.txt")
