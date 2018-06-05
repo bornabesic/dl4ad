@@ -164,7 +164,8 @@ for epoch in range(EPOCHS):
     print_torch_cuda_mem_usage()
     total_epoch_time += elapsed_time
     avg_epoch_time = total_epoch_time / (epoch + 1)
-    print("Training time left: ~ {:.2f} minutes".format((EPOCHS - epoch - 1) * avg_epoch_time))
+    training_time_left = (EPOCHS - epoch - 1) * avg_epoch_time
+    print("Training time left: ~ {:.2f} minutes ({:.2f} hours)".format(training_time_left, training_time_left / 60))
 
     # Save the average epoch loss
     avg_loss = total_loss / num_iters
