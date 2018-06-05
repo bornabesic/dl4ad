@@ -36,3 +36,24 @@ class Stopwatch:
     def stop(self):
         self.end_time = time.time()
         return (self.end_time - self.start_time) / 60
+
+
+class Logger:
+
+    def __init__(self, filename, print_to_stdout = False):
+        self.print_to_stdout = print_to_stdout
+        self.file = open(filename, "w", encoding = "utf-8")
+
+    def log(self, message = "", end = "\n"):
+        if self.print_to_stdout:
+            print(message, end = end)
+        print(message, end = end, file = self.file)
+
+    def close(self):
+        self.file.close()
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, type, value, traceback):
+        self.close()
