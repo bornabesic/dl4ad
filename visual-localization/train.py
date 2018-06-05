@@ -129,6 +129,7 @@ if not os.path.exists(directory):
 model_path = "{}/{}".format(directory, identifier)
 
 # TODO Training phase
+total_epoch_time = 0
 stopwatch_train.start()
 for epoch in range(EPOCHS):
     x.append(epoch + 1)
@@ -165,6 +166,9 @@ for epoch in range(EPOCHS):
     elapsed_time = stopwatch_epoch.stop()
     print("Epoch time: {:0.2f} minutes".format(elapsed_time))
     print_torch_cuda_mem_usage()
+    total_epoch_time += elapsed_time
+    avg_epoch_time = total_epoch_time / (epoch + 1)
+    print("Training time left: ~ {:.2f} minutes".format((EPOCHS - epoch - 1) * avg_epoch_time))
 
     # Save the average epoch loss
     avg_loss = total_loss / num_iters
