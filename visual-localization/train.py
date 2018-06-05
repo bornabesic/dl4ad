@@ -11,7 +11,7 @@ mpl.use("Agg")
 import matplotlib.pyplot as plt
 
 from dataset import DeepLocAugmented, make_loader, evaluate
-from network import parameters, PoseNet
+from network import parameters, PoseNetSimple
 from customized_loss import Customized_Loss
 from utils import print_torch_cuda_mem_usage, Stopwatch
 
@@ -91,7 +91,7 @@ train_loader = make_loader(train_data, batch_size = BATCH_SIZE)
 valid_loader = make_loader(valid_data)
 
 # Define the model
-net = PoseNet()
+net = PoseNetSimple()
 if MODEL_PATH is not None:
     print("Using {}.".format(MODEL_PATH))
     net.load_state_dict(torch.load(MODEL_PATH))
@@ -144,19 +144,15 @@ for epoch in range(EPOCHS):
         images = images.to(device = device)
 
         # Predict the pose
-        ps_out1, ps_out2, ps_out3 = net(images)
-        loss1 = criterion(ps_out1, ps)
-        loss2 = criterion(ps_out2, ps)
-        loss3 = criterion(ps_out3, ps)
+        ps_out = net(images)
+        loss = criterion(ps_out, ps)
 
-        total_loss += loss3.item() # Important to use .item() !
+        total_loss += loss.item() # Important to use .item() !
         num_iters += 1
 
         # Do a backpropagation step
         optimizer.zero_grad()
-        loss1.backward(retain_graph = True)
-        loss2.backward(retain_graph = True)
-        loss3.backward()
+        loss.backward()
         optimizer.step()
 
         if num_iters % 30 == 0:

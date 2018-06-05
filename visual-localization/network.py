@@ -158,3 +158,73 @@ class PoseNet(nn.Module):
         out = self.dropout(out)
         out3 = self.final_regressor(out)
         return (out1, out2, out3)
+
+class PoseNetSimple(nn.Module):
+
+    def __init__(self):
+        super(PoseNetSimple, self).__init__()
+
+        # Stem network
+        self.stem_network = nn.Sequential(
+            nn.Conv2d(in_channels = 3, out_channels = 64, kernel_size = 7, stride = 2),
+            nn.MaxPool2d(kernel_size = 3, stride = 2),
+            nn.ReLU(True),
+            #
+            nn.Conv2d(in_channels = 64, out_channels = 192, kernel_size = 3, stride = 1),
+            nn.MaxPool2d(kernel_size = 3, stride = 2),
+            nn.ReLU(True),
+        )
+
+        # Side networks
+        self.side_network_4a = nn.Sequential(
+            nn.AvgPool2d(kernel_size = 5, stride = 3),
+            nn.Conv2d(in_channels = 512, out_channels = 128, kernel_size = 1, stride = 1),
+            nn.ReLU(True),
+            Flatten(),
+            nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
+            nn.ReLU(True),
+            nn.Dropout(p = 0.7),
+            nn.Linear(1024, 7)
+        )
+
+        # Inceptions 3
+        self.incep_3a = Inception(
+            in_channels = 192,
+            conv1x1_out_channels = 64,
+            conv3x3_in_channels = 96, conv3x3_out_channels = 128,
+            conv5x5_in_channels = 16, conv5x5_out_channels = 32,
+            maxpool3x3_out_channels = 32,
+        )
+
+        self.incep_3b = Inception(
+            in_channels = 256,
+            conv1x1_out_channels = 128,
+            conv3x3_in_channels = 128, conv3x3_out_channels = 192,
+            conv5x5_in_channels = 32, conv5x5_out_channels = 96,
+            maxpool3x3_out_channels = 64,
+        )
+
+        # Inceptions 4
+        self.incep_4a = Inception(
+            in_channels = 480,
+            conv1x1_out_channels = 192,
+            conv3x3_in_channels = 96, conv3x3_out_channels = 208,
+            conv5x5_in_channels = 16, conv5x5_out_channels = 48,
+            maxpool3x3_out_channels = 64
+        )
+
+        self.flatten = Flatten()
+        self.dropout = nn.Dropout(p = 0.4)
+        self.maxpool = nn.MaxPool2d(kernel_size = 3, stride = 2, padding = 1)
+        self.avgpool = nn.AvgPool2d(kernel_size = 7, stride = 1)
+
+    def forward(self, x):
+        out = self.stem_network(x)
+
+        out = self.incep_3a(out)
+        out = self.incep_3b(out)
+        out = self.maxpool(out)
+
+        out = self.incep_4a(out)
+        out1 = self.side_network_4a(out)
+        return out1
