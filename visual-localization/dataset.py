@@ -44,7 +44,7 @@ class DeepLoc(Dataset):
 
         # x = torch.tensor([x, y, z]) # 3D camera location (vector)
         # q = torch.tensor([qw, qx, qy, qz]) # Rotation (quaternion)
-        p = torch.tensor([x, y, z, qw, qx, qy, qz])
+        p = torch.Tensor([x, y, z, qw, qx, qy, qz])
         return (image, p)
 
 class DeepLocAugmented(DeepLoc):
@@ -93,6 +93,21 @@ def make_train_valid_loader(data, valid_percentage, batch_size = 4, num_workers 
     )
 
     return train_loader, valid_loader
+
+def make_train_valid_generator(data, valid_percentage):
+    num_samples = len(data)
+    indices = list(range(num_samples))
+    split = int(valid_percentage * num_samples)
+
+    np.random.shuffle(indices)
+
+    train_idxs, valid_idxs = indices[split:], indices[:split]
+
+    def generator(idxs):
+        for i in idxs:
+            yield data[i]
+
+    return generator(train_idxs), generator(valid_idxs)
 
 def make_test_loader(data, batch_size = 4, shuffle = True, num_workers = 1, pin_memory = True):
     return DataLoader(data,

@@ -7,6 +7,7 @@ import numpy as np
 import os
 
 from preprocessing import ToRGB
+from dataset import make_train_valid_generator
 
 # Identity transformation
 # (Returns the original image)
@@ -142,12 +143,18 @@ if __name__ == "__main__":
     train_data = DeepLoc("train", preprocess = ToRGB())
     test_data = DeepLoc("test", preprocess = ToRGB())
 
+    # Train / validation split of the training dataset
+    train_gen, valid_gen = make_train_valid_generator(train_data, valid_percentage = 0.2,)
+
     # Make directory structure
     train_path = os.path.join("DeepLocAugmented", "train")
+    valid_path = os.path.join("DeepLocAugmented", "validation")
     test_path = os.path.join("DeepLocAugmented", "test")
     poses_train = os.path.join(train_path, "poses.txt")
     poses_test = os.path.join(test_path, "poses.txt")
+    poses_valid = os.path.join(valid_path, "poses.txt")
     os.makedirs(train_path, exist_ok = True)
+    os.makedirs(valid_path, exist_ok = True)
     os.makedirs(test_path, exist_ok = True)
 
     # Define the augmentations
@@ -166,7 +173,7 @@ if __name__ == "__main__":
 
     # Iterate the train data
     i = 0
-    for image, pose in train_data:
+    for image, pose in train_gen:
         x, y, z, qw, qx, qy, qz = pose
 
         for augment in augmentations:
@@ -185,23 +192,36 @@ if __name__ == "__main__":
             with open(poses_train, "a", encoding = "utf-8") as f:
                 print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(image_path, x, y, z, qw, qx, qy, qz), file = f)
 
-    # Iterate the test data
+    # Iterate the validation data BUT DO NOT AUGMENT
+    i = 0
+    for image, pose in valid_gen:
+        x, y, z, qw, qx, qy, qz = pose
+
+        image_name = "Image{}.jpeg".format(i)
+        image_path = os.path.join(valid_path, image_name)
+
+        # Save the image
+        print(image_path)
+        image.save(image_path, format = "JPEG")
+        i += 1
+
+        # Write to poses.txt
+        with open(poses_valid, "a", encoding = "utf-8") as f:
+            print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(image_path, x, y, z, qw, qx, qy, qz), file = f)
+
+    # Iterate the test data BUT DO NOT AUGMENT
     i = 0
     for image, pose in test_data:
         x, y, z, qw, qx, qy, qz = pose
 
-        for augment in augmentations:
-            image_name = "Image{}.jpeg".format(i)
-            image_path = os.path.join(test_path, image_name)
+        image_name = "Image{}.jpeg".format(i)
+        image_path = os.path.join(test_path, image_name)
 
-            # Augment the image
-            image_augmented = augment(image)
+        # Save the image
+        print(image_path)
+        image.save(image_path, format = "JPEG")
+        i += 1
 
-            # Save the image
-            print(image_path)
-            image_augmented.save(image_path, format = "JPEG")
-            i += 1
-
-            # Write to poses.txt
-            with open(poses_test, "a", encoding = "utf-8") as f:
-                print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(image_path, x, y, z, qw, qx, qy, qz), file = f)
+        # Write to poses.txt
+        with open(poses_test, "a", encoding = "utf-8") as f:
+            print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(image_path, x, y, z, qw, qx, qy, qz), file = f)
