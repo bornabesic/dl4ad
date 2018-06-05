@@ -124,9 +124,9 @@ def evaluate(model, criterion, loader, device):
     for images, ps in loader:
         ps = ps.to(device = device)
         images = images.to(device = device)
-        ps_out1, ps_out2, ps_out3 = model(images)
-        loss3 = criterion(ps_out3, ps)
-        total_loss += loss3.item() # Important to use .item() !
+        ps_out = model(images)
+        loss = criterion(ps_out, ps)
+        total_loss += loss.item() # Important to use .item() !
         num_iters += 1
     avg_loss = total_loss / num_iters
     return avg_loss
