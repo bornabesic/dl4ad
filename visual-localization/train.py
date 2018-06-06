@@ -10,10 +10,12 @@ import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 
-from dataset import DeepLocAugmented, make_loader, evaluate
+from dataset import DeepLocAugmented, make_loader, evaluate, evaluate_median
 from network import parameters, PoseNetSimple
 from customized_loss import Customized_Loss
 from utils import print_torch_cuda_mem_usage, Stopwatch, Logger
+from preprocessing import validation_preprocessing
+
 
 # Parse CLI arguments
 args_parser = argparse.ArgumentParser(
@@ -31,7 +33,21 @@ args_parser.add_argument(
 	"--momentum",
 	type = float,
 	help = "SGD momentum",
+    default = 0.5
+)
+
+args_parser.add_argument(
+	"--gamma",
+	type = float,
+	help = "SGD learning rate decay factor",
     default = 0.9
+)
+
+args_parser.add_argument(
+	"--decay_lr_every",
+	type = float,
+	help = "Number of epochs after which learning rate decay factor will be applied",
+    default = 10
 )
 
 args_parser.add_argument(
@@ -67,6 +83,8 @@ args = args_parser.parse_args()
 
 LEARNING_RATE = args.learning_rate
 MOMENTUM = args.momentum
+GAMMA = args.gamma
+LR_DECAY_EPOCHS = args.decay_lr_every
 LOSS_BETA = args.loss_beta
 BATCH_SIZE = args.batch_size
 EPOCHS = args.epochs
@@ -91,7 +109,7 @@ logger = Logger("{}/{}.log.txt".format(directory, identifier), print_to_stdout =
 
 # Load the dataset
 train_data = DeepLocAugmented("train")
-valid_data = DeepLocAugmented("validation")
+valid_data = DeepLocAugmented("validation", preprocess = validation_preprocessing)
 logger.log("Train set size: {} samples".format(len(train_data)))
 logger.log("Validation set size: {} samples".format(len(valid_data)))
 
@@ -103,7 +121,7 @@ logger.log("Epochs: {}".format(EPOCHS))
 
 # Generate the data loaders
 train_loader = make_loader(train_data, batch_size = BATCH_SIZE)
-valid_loader = make_loader(valid_data)
+valid_loader = make_loader(valid_data, batch_size = 1)
 
 # Define the model
 net = PoseNetSimple()
@@ -118,8 +136,9 @@ logger.log("Trainable parameters: {}".format(trainable_params))
 logger.log("Total parameters: {}".format(total_params))
 logger.log("Memory requirement: {:.2f} MiB".format(((total_params * 4) / 1024) / 1024))
 
-# TODO Optimizer
+# Optimizer
 optimizer = optim.SGD(net.parameters(), lr = LEARNING_RATE, momentum = MOMENTUM)
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = LR_DECAY_EPOCHS, gamma = GAMMA)
 
 # Loss function
 criterion = Customized_Loss(beta = LOSS_BETA)
@@ -133,7 +152,7 @@ y_loss_valid = []
 stopwatch_train = Stopwatch()
 stopwatch_epoch = Stopwatch()
 
-# TODO Training phase
+# Training phase
 total_epoch_time = 0
 stopwatch_train.start()
 for epoch in range(EPOCHS):
@@ -141,6 +160,7 @@ for epoch in range(EPOCHS):
     logger.log("[Epoch {}]".format(epoch + 1))
 
     net.train()
+    scheduler.step()
     total_loss = 0
     num_iters = 0
     stopwatch_epoch.start()
@@ -180,6 +200,8 @@ for epoch in range(EPOCHS):
     avg_loss_valid = evaluate(net, criterion, valid_loader, device)
     y_loss_valid.append(avg_loss_valid)
     logger.log("Average validation loss: {}".format(avg_loss_valid))
+    x_error_median, q_error_median = evaluate_median(net, valid_loader, device)
+    print("Median validation error: {:.2f} m, {:.2f} °".format(x_error_median, q_error_median))
 
     # Plot the average loss over the epochs
     loss_fig = plt.figure()

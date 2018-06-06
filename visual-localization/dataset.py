@@ -130,3 +130,32 @@ def evaluate(model, criterion, loader, device):
         num_iters += 1
     avg_loss = total_loss / num_iters
     return avg_loss
+
+def evaluate_median(model, loader, device):
+    model.eval()
+    x_errors = []
+    q_errors = []
+
+    for image, p in loader:
+
+        p = p.to(device = device)
+        image = image.to(device = device)
+        p_out = model(image)
+
+        x = p[:, :3].cpu().detach().numpy()
+        q = p[:, 3:].cpu().detach().numpy()
+        x_out = p_out[:, :3].cpu().detach().numpy()
+        q_out = p_out[:, 3:].cpu().detach().numpy()
+
+        q1 = q / np.linalg.norm(q)
+        q2 = q_out / np.linalg.norm(q_out)
+        d = np.abs(np.sum(np.multiply(q1, q2)))
+        theta = 2 * np.arccos(d) * 180 / np.pi
+        error_x = np.linalg.norm(x - x_out)
+
+        x_errors.append(error_x)
+        q_errors.append(theta)
+
+    x_error_median = np.median(x_errors)
+    q_error_median = np.median(q_errors)
+    return x_error_median, q_error_median

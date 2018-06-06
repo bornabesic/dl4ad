@@ -3,7 +3,7 @@
 import torch
 import argparse
 
-from dataset import DeepLocAugmented, make_loader, evaluate
+from dataset import DeepLocAugmented, make_loader, evaluate, evaluate_median
 from network import PoseNet
 from customized_loss import Customized_Loss
 
@@ -36,11 +36,11 @@ net.load_state_dict(torch.load(args.model_path))
 net.to(device = device)
 
 # Dataset
-test_data = DeepLocAugmented("test")
+test_data = DeepLocAugmented("test", preprocess = validation_preprocessing)
 print("Test samples:", len(test_data))
 
 # Loader
-test_loader = make_loader(test_data)
+test_loader = make_loader(test_data, batch_size = 1)
 
 # Loss function
 criterion = Customized_Loss(beta = LOSS_BETA)
@@ -49,3 +49,5 @@ criterion = Customized_Loss(beta = LOSS_BETA)
 print("[TEST]")
 avg_loss_test = evaluate(net, criterion, test_loader, device)
 print("Average test loss: {}".format(avg_loss_test))
+x_error_median, q_error_median = evaluate_median(net, test_loader, device)
+print("Median test error: {:.2f} m, {:.2f} °".format(x_error_median, q_error_median))

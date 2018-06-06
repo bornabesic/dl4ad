@@ -60,7 +60,7 @@ class PoseNet(nn.Module):
             conv5x5_in_channels = 16, conv5x5_out_channels = 32,
             maxpool3x3_out_channels = 32,
         )
-            
+
         self.incep_3b = Inception(
             in_channels = 256,
             conv1x1_out_channels = 128,
@@ -183,7 +183,7 @@ class PoseNetSimple(nn.Module):
             Flatten(),
             nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
             nn.ReLU(True),
-            nn.Dropout(p = 0.7),
+            nn.Dropout(p = 0.5),
             nn.Linear(1024, 7)
         )
 
@@ -214,7 +214,6 @@ class PoseNetSimple(nn.Module):
         )
 
         self.flatten = Flatten()
-        self.dropout = nn.Dropout(p = 0.4)
         self.maxpool = nn.MaxPool2d(kernel_size = 3, stride = 2, padding = 1)
         self.avgpool = nn.AvgPool2d(kernel_size = 7, stride = 1)
 

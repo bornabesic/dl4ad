@@ -1,5 +1,5 @@
 
-from torchvision.transforms import RandomCrop, Resize, Compose, ToTensor
+from torchvision.transforms import CenterCrop, RandomCrop, Resize, Compose, ToTensor
 import numpy as np
 
 # Convert the image from RGBA to RGB
@@ -28,6 +28,13 @@ class SubtractMean(object):
 default_preprocessing = Compose([
     Resize(256), # Rescale so that the smaller edge is 256 pxs
     RandomCrop(size = (224, 224)), # Take a random 224 x 224 crop
+    SubtractMean(),
+    ToTensor()
+])
+
+validation_preprocessing = Compose([
+    Resize(256), # Rescale so that the smaller edge is 256 pxs
+    CenterCrop(size = (224, 224)), # Take a central 224 x 224 crop
     SubtractMean(),
     ToTensor()
 ])
