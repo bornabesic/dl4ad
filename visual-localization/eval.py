@@ -4,7 +4,7 @@ import torch
 import argparse
 
 from dataset import DeepLocAugmented, make_loader, evaluate, evaluate_median
-from network import PoseNet
+from network import PoseNetSimple
 from customized_loss import Customized_Loss
 from preprocessing import validation_preprocessing
 
@@ -40,7 +40,7 @@ else:
     device = torch.device("cpu")
 
 # Load the saved parameters
-net = PoseNet()
+net = PoseNetSimple()
 net.load_state_dict(torch.load(args.model_path))
 net.to(device = device)
 
