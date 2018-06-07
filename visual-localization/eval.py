@@ -18,10 +18,18 @@ args_parser.add_argument(
 	help = "Path to the saved model parameters file"
 )
 
+args_parser.add_argument(
+	"--mode",
+	type = str,
+	help = "Dataset split to load (train / validation / test)",
+	default = "validation"
+)
+
 args = args_parser.parse_args()
 
 # Parameters
 LOSS_BETA = int(args.model_path.split("_")[1])
+MODE = args.mode
 print("Beta: {}".format(LOSS_BETA))
 
 # Device - use CPU is CUDA is not available
@@ -36,18 +44,18 @@ net.load_state_dict(torch.load(args.model_path))
 net.to(device = device)
 
 # Dataset
-test_data = DeepLocAugmented("test", preprocess = validation_preprocessing)
-print("Test samples:", len(test_data))
+data = DeepLocAugmented(MODE, preprocess = validation_preprocessing)
+print("{} samples: {}".format(MODE, len(data)))
 
 # Loader
-test_loader = make_loader(test_data, batch_size = 1)
+loader = make_loader(data, batch_size = 1)
 
 # Loss function
 criterion = Customized_Loss(beta = LOSS_BETA)
 
-# TODO Evaluate on the test set
-print("[TEST]")
-avg_loss_test = evaluate(net, criterion, test_loader, device)
-print("Average test loss: {}".format(avg_loss_test))
-x_error_median, q_error_median = evaluate_median(net, test_loader, device)
-print("Median test error: {:.2f} m, {:.2f} °".format(x_error_median, q_error_median))
+# Evaluate on the data
+print("[{}]".format(MODE))
+avg_loss = evaluate(net, criterion, loader, device)
+print("Average {} loss: {}".format(MODE, avg_loss))
+x_error_median, q_error_median = evaluate_median(net, loader, device)
+print("Median {} error: {:.2f} m, {:.2f} °".format(MODE, x_error_median, q_error_median))
