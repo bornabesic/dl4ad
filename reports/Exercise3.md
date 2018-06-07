@@ -7,14 +7,14 @@ A simplified version of the PoseNet was used. The training of the PoseNetSimple 
 The loss function is the sum of the L2 position loss and the L2 orientation quaternion loss weighted by the factor ß.
 
 ## Training
-There are severeal runs with various values for beta:
-For ß = 700, ß = 1000 and ß = 2000 the runs were stopped early because of increasing errors after 10 - 15 epochs. 
+There were severeal runs with various values for ß:
+for ß = 700, ß = 1000 and ß = 2000 the runs were stopped early because of increasing errors after 10 - 15 epochs. 
 
 A run with ß = 250 finished after 140 epochs and achieved a median pose error of 4.07 m, 2.87°. 
 
 ![](images/model_250_2018_6_6_21_11.loss.png)
 
-Another run with ß = 400 achieved a median posed error of 4.28 m, 3.03° after 50 epochs. The training is going on. 
+Another run with ß = 400 achieved a median pose error of 4.28 m, 3.03° after 50 epochs. The training is going on. 
 
 ## Implementation
 First, the model was trained without pretrained weights because they are not available online for PyTorch. 
