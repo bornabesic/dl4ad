@@ -10,6 +10,12 @@ def parameters(model):
         trainable += (p.numel() if p.requires_grad else 0)
     return (trainable, total)
 
+def xavier_initialization(module):
+    try:
+        nn.init.xavier_uniform_(module.weight)
+    except AttributeError:
+        pass
+
 # Modified implementation originally taken from:
 # https://github.com/kuangliu/pytorch-cifar/blob/master/models/googlenet.py
 
@@ -134,6 +140,8 @@ class PoseNet(nn.Module):
             nn.Linear(2048, 7)
         )
 
+        self.apply(xavier_initialization)
+
     def forward(self, x):
         out = self.stem_network(x)
 
@@ -216,6 +224,8 @@ class PoseNetSimple(nn.Module):
         self.flatten = Flatten()
         self.maxpool = nn.MaxPool2d(kernel_size = 3, stride = 2, padding = 1)
         self.avgpool = nn.AvgPool2d(kernel_size = 7, stride = 1)
+
+        self.apply(xavier_initialization)
 
     def forward(self, x):
         out = self.stem_network(x)
