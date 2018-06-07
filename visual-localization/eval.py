@@ -6,6 +6,7 @@ import argparse
 from dataset import DeepLocAugmented, make_loader, evaluate, evaluate_median
 from network import PoseNet
 from customized_loss import Customized_Loss
+from preprocessing import validation_preprocessing
 
 # Parse CLI arguments
 args_parser = argparse.ArgumentParser(
