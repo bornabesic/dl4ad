@@ -147,11 +147,7 @@ def evaluate_median(model, loader, device):
         x_out = p_out[:, :3].cpu().detach().numpy()
         q_out = p_out[:, 3:].cpu().detach().numpy()
 
-        q1 = q / np.linalg.norm(q)
-        q2 = q_out / np.linalg.norm(q_out)
-        d = np.abs(np.sum(np.multiply(q1, q2)))
-        theta = 2 * np.arccos(d) * 180 / np.pi
-        error_x = np.linalg.norm(x - x_out)
+        error_x, theta = meters_and_degrees_error(x, q, x_out, q_out)
 
         x_errors.append(error_x)
         q_errors.append(theta)
@@ -159,3 +155,11 @@ def evaluate_median(model, loader, device):
     x_error_median = np.median(x_errors)
     q_error_median = np.median(q_errors)
     return x_error_median, q_error_median
+
+def meters_and_degrees_error(x, q, x_predicted, q_predicted):
+    q1 = q / np.linalg.norm(q)
+    q2 = q_predicted / np.linalg.norm(q_predicted)
+    d = np.abs(np.sum(np.multiply(q1, q2)))
+    orientation_error = 2 * np.arccos(d) * 180 / np.pi
+    position_error = np.linalg.norm(x - x_predicted)
+    return position_error, orientation_error
