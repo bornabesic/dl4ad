@@ -1,22 +1,21 @@
-# Exercise 3 (Training and Creating a model) report
+# Exercise 3 report
 
-## The Network
-A simplified version of the PoseNet is used. The training of the PoseNet need around 15 Minutes per epoch. By omitting one of the its three "inception" modules, the calculation time has been decreased to around 11 Minutes and the used memory is less, while the performance stays at a similar level. 
+## Neural network architecture
+A simplified version of the PoseNet was used. The training of the PoseNetSimple required around 12 minutes per epoch. By using the portion of the original PoseNet just up to the first regressor, the calculation time has been decreased and the memory usage is much smaller (8.8 MiB), while the performance stays at a similar level. 
 
-## The loss function 
-The loss function is the sum of the position loss and the quaternion loss that is additionally weighted by the factor Beta.
+## Loss function 
+The loss function is the sum of the L2 position loss and the L2 orientation quaternion loss weighted by the factor ß.
 
 ## Training
 There are severeal runs with various values for beta:
-For beta = 700, beta = 1000 and beta = 2000 the runs are stopped early because of increasing errors after 10-15 epochs. 
+For ß = 700, ß = 1000 and ß = 2000 the runs were stopped early because of increasing errors after 10 - 15 epochs. 
 
-A run with beta = 250 is finished over 200 Epochs and reached a median error of 4.07 m, 2.87 °. 
+A run with ß = 250 finished after 140 epochs and achieved a median pose error of 4.07 m, 2.87°. 
 
----> Picture 
+![](images/model_250_2018_6_6_21_11.loss.png)
 
-Another run with beta = 400 reached a median error of 4.28 m, 3.03 ° after 50 epochs. The training is going on. 
-
+Another run with ß = 400 achieved a median posed error of 4.28 m, 3.03° after 50 epochs. The training is going on. 
 
 ## Implementation
-First, the model is trained without pretrained weightes because they are not found online for pytorch. 
-After several abortions of the training procedure caused by reboots of the pool computers, the model is saved after each epoch. So the training can be continued at every point. 
+First, the model was trained without pretrained weights because they are not available online for PyTorch. 
+After several abortions of the training procedure caused by reboots of the pool computers, the model was saved after each epoch. Training then could be resumed at every point.
