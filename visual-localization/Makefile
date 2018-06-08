@@ -14,7 +14,7 @@ gmplot:
 	mv ./gmplot/gmplot ./gmplot_tmp
 	rm -rf ./gmplot/
 	mv ./gmplot_tmp ./gmplot
-	mv -f ./gmplot.py ./gmplot/
+	cp -f ./gmplot.py ./gmplot/
 
 check_code:
 	python3 -m py_compile *.py
