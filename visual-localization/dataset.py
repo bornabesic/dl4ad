@@ -7,7 +7,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from PIL import Image
 
 from utils import read_table
-from preprocessing import default_preprocessing
+from preprocessing import default_preprocessing, validation_resize, validation_crops, validation_tensor
 
 class DeepLoc(Dataset):
 
@@ -131,27 +131,40 @@ def make_loader(data, batch_size = 4, shuffle = True, num_workers = 0, pin_memor
 #     avg_loss = total_loss / num_iters
 #     return avg_loss
 
-def evaluate_median(model, criterion, loader, device):
+def evaluate_median(model, criterion, data, device):
     model.eval()
     x_errors = []
     q_errors = []
     losses = []
 
-    for image, p in loader:
+    for image, p in data:
 
+        image = validation_resize(image)
+        crops = validation_crops(image)
+        crops = map(lambda c: validation_tensor(c), crops)
+
+        ps_crops = []
+        for crop in crops:
+            crop = crop.expand(1, -1, -1, -1)
+            crop = crop.to(device = device)
+            p_outs = model(crop)
+            p_out = p_outs[-1]
+            ps_crops.append(p_out)
+
+        ps_crops = torch.stack(ps_crops, dim = 0)
+        p_avg = torch.mean(ps_crops, dim = 0)
+
+        p = p.expand(1, -1)
         p = p.to(device = device)
-        image = image.to(device = device)
-        p_outs = model(image)
+        p_avg = p_avg.to(device = device)
 
-        p_out = p_outs[-1]
-
-        loss = criterion(p_out, p)
+        loss = criterion(p_avg, p)
         losses.append(loss.item())
 
         x = p[:, :3].cpu().detach().numpy()
         q = p[:, 3:].cpu().detach().numpy()
-        x_out = p_out[:, :3].cpu().detach().numpy()
-        q_out = p_out[:, 3:].cpu().detach().numpy()
+        x_out = p_avg[:, :3].cpu().detach().numpy()
+        q_out = p_avg[:, 3:].cpu().detach().numpy()
 
         error_x, theta = meters_and_degrees_error(x, q, x_out, q_out)
 

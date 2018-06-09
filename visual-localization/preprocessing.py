@@ -1,5 +1,5 @@
 
-from torchvision.transforms import CenterCrop, RandomCrop, Resize, Compose, ToTensor
+from torchvision.transforms import CenterCrop, FiveCrop, RandomCrop, Resize, Compose, ToTensor
 import numpy as np
 
 # Convert the image from RGBA to RGB
@@ -32,9 +32,9 @@ default_preprocessing = Compose([
     ToTensor()
 ])
 
-validation_preprocessing = Compose([
-    Resize(256), # Rescale so that the smaller edge is 256 pxs
-    CenterCrop(size = (224, 224)), # Take a central 224 x 224 crop
+validation_resize = Resize(256)
+validation_crops = FiveCrop(size = (224, 224))
+validation_tensor = Compose([
     SubtractMean(),
     ToTensor()
 ])
