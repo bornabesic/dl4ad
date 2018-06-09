@@ -10,7 +10,8 @@ import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 
-from dataset import DeepLocAugmented, make_loader, evaluate, evaluate_median
+from dataset import DeepLocAugmented, make_loader, evaluate_median
+import network
 from network import parameters, PoseNetSimple
 from customized_loss import Customized_Loss
 from utils import print_torch_cuda_mem_usage, Stopwatch, Logger
@@ -72,6 +73,13 @@ args_parser.add_argument(
 )
 
 args_parser.add_argument(
+	"--architecture",
+	type = str,
+	help = "Neural network architecture to use",
+    default = "PoseNetSimple"
+)
+
+args_parser.add_argument(
 	"--use_model",
 	type = str,
 	help = "Path to the model to continue training on"
@@ -88,7 +96,9 @@ LR_DECAY_EPOCHS = args.decay_lr_every
 LOSS_BETA = args.loss_beta
 BATCH_SIZE = args.batch_size
 EPOCHS = args.epochs
+ARCHITECTURE = args.architecture
 MODEL_PATH = args.use_model
+arch_class = getattr(network, ARCHITECTURE)
 
 # Device - use CPU is CUDA is not available
 if torch.cuda.is_available():
@@ -118,13 +128,15 @@ logger.log("Momentum: {}".format(MOMENTUM))
 logger.log("Beta: {}".format(LOSS_BETA))
 logger.log("Batch size: {}".format(BATCH_SIZE))
 logger.log("Epochs: {}".format(EPOCHS))
+logger.log("Architecture: {}".format(ARCHITECTURE))
+logger.log("Device: {}".format(device))
 
 # Generate the data loaders
-train_loader = make_loader(train_data, batch_size = BATCH_SIZE)
-valid_loader = make_loader(valid_data, batch_size = 1)
+train_loader = make_loader(train_data, batch_size = BATCH_SIZE, num_workers = 4)
+valid_loader = make_loader(valid_data, batch_size = 1, num_workers = 4)
 
 # Define the model
-net = PoseNetSimple()
+net = arch_class()
 if MODEL_PATH is not None:
     logger.log("Using {}.".format(MODEL_PATH))
     net.load_state_dict(torch.load(MODEL_PATH))
@@ -169,15 +181,18 @@ for epoch in range(EPOCHS):
         images = images.to(device = device)
 
         # Predict the pose
-        ps_out = net(images)
-        loss = criterion(ps_out, ps)
+        ps_outs = net(images)
 
-        total_loss += loss.item() # Important to use .item() !
+        losses = tuple(map(lambda ps_out: criterion(ps_out, ps), ps_outs))
+
+        total_loss += losses[-1].item() # Important to use .item() !
         num_iters += 1
 
         # Do a backpropagation step
         optimizer.zero_grad()
-        loss.backward()
+        for loss in losses[:-1]:
+            loss.backward(retain_graph = True)
+        losses[-1].backward()
         optimizer.step()
 
         if num_iters % 30 == 0:
@@ -197,22 +212,25 @@ for epoch in range(EPOCHS):
     logger.log("Average training loss: {}".format(avg_loss))
 
     # Evaluate on the validation set
-    avg_loss_valid = evaluate(net, criterion, valid_loader, device)
-    y_loss_valid.append(avg_loss_valid)
-    logger.log("Average validation loss: {}".format(avg_loss_valid))
-    x_error_median, q_error_median = evaluate_median(net, valid_loader, device)
-    print("Median validation error: {:.2f} m, {:.2f} °".format(x_error_median, q_error_median))
+    # avg_loss_valid = evaluate(net, criterion, valid_loader, device)
+    # y_loss_valid.append(avg_loss_valid)
+    # logger.log("Average validation loss: {}".format(avg_loss_valid))
+    x_error_median, q_error_median, loss_median = evaluate_median(net, criterion, valid_loader, device)
+    y_loss_valid.append(loss_median)
+    logger.log("Median validation error: {:.2f} m, {:.2f} °".format(x_error_median, q_error_median))
+    logger.log("Median validation loss: {}".format(loss_median))
 
     # Plot the average loss over the epochs
     loss_fig = plt.figure()
     loss_ax = loss_fig.gca()
     loss_ax.plot(x, y_loss_valid, "r", label = "Validation")
     plt.xlabel("Epoch")
-    plt.ylabel("Average loss")
+    plt.ylabel("Median loss")
     loss_ax.grid(True)
     loss_fig.legend()
 
     loss_fig.savefig("{}/{}.loss.png".format(directory, identifier))
+    plt.close(loss_fig)
 
     # Save the model
     torch.save(net.state_dict(), model_path)

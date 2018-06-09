@@ -143,6 +143,9 @@ class PoseNet(nn.Module):
         self.apply(xavier_initialization)
 
     def forward(self, x):
+        out1 = None
+        out2 = None
+
         out = self.stem_network(x)
 
         out = self.incep_3a(out)
@@ -150,11 +153,13 @@ class PoseNet(nn.Module):
         out = self.maxpool(out)
 
         out = self.incep_4a(out)
-        out1 = self.side_network_4a(out)
+        if self.training:
+            out1 = self.side_network_4a(out)
         out = self.incep_4b(out)
         out = self.incep_4c(out)
         out = self.incep_4d(out)
-        out2 = self.side_network_4d(out)
+        if self.training:
+            out2 = self.side_network_4d(out)
         out = self.incep_4e(out)
         out = self.maxpool(out)
 
@@ -236,4 +241,4 @@ class PoseNetSimple(nn.Module):
 
         out = self.incep_4a(out)
         out1 = self.side_network_4a(out)
-        return out1
+        return (out1,)

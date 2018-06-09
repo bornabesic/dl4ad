@@ -117,30 +117,36 @@ def make_loader(data, batch_size = 4, shuffle = True, num_workers = 0, pin_memor
         shuffle = shuffle
     )
 
-def evaluate(model, criterion, loader, device):
-    model.eval()
-    total_loss = 0
-    num_iters = 0
-    for images, ps in loader:
-        ps = ps.to(device = device)
-        images = images.to(device = device)
-        ps_out = model(images)
-        loss = criterion(ps_out, ps)
-        total_loss += loss.item() # Important to use .item() !
-        num_iters += 1
-    avg_loss = total_loss / num_iters
-    return avg_loss
+# def evaluate(model, criterion, loader, device):
+#     model.eval()
+#     total_loss = 0
+#     num_iters = 0
+#     for images, ps in loader:
+#         ps = ps.to(device = device)
+#         images = images.to(device = device)
+#         ps_out = model(images)
+#         loss = criterion(ps_out, ps)
+#         total_loss += loss.item() # Important to use .item() !
+#         num_iters += 1
+#     avg_loss = total_loss / num_iters
+#     return avg_loss
 
-def evaluate_median(model, loader, device):
+def evaluate_median(model, criterion, loader, device):
     model.eval()
     x_errors = []
     q_errors = []
+    losses = []
 
     for image, p in loader:
 
         p = p.to(device = device)
         image = image.to(device = device)
-        p_out = model(image)
+        p_outs = model(image)
+
+        p_out = p_outs[-1]
+
+        loss = criterion(p_out, p)
+        losses.append(loss.item())
 
         x = p[:, :3].cpu().detach().numpy()
         q = p[:, 3:].cpu().detach().numpy()
@@ -154,7 +160,8 @@ def evaluate_median(model, loader, device):
 
     x_error_median = np.median(x_errors)
     q_error_median = np.median(q_errors)
-    return x_error_median, q_error_median
+    loss_median = np.median(losses)
+    return x_error_median, q_error_median, loss_median
 
 def meters_and_degrees_error(x, q, x_predicted, q_predicted):
     q1 = q / np.linalg.norm(q)

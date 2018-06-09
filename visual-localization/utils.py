@@ -42,12 +42,17 @@ class Logger:
 
     def __init__(self, filename, print_to_stdout = False):
         self.print_to_stdout = print_to_stdout
-        self.file = open(filename, "w", encoding = "utf-8")
+        self.filename = filename
+        self.open()
 
     def log(self, message = "", end = "\n"):
         if self.print_to_stdout:
             print(message, end = end)
         print(message, end = end, file = self.file)
+        self.file.flush()
+
+    def open(self):
+        self.file = open(self.filename, "w", encoding = "utf-8")
 
     def close(self):
         self.file.close()
