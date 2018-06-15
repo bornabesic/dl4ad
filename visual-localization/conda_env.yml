@@ -1,0 +1,15 @@
+name: dl4ad
+channels:
+  - menpo
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - python=3
+  - opencv3
+  - pyyaml
+  - pytorch
+  - torchvision
+  - matplotlib
+  - numpy
+  - scipy

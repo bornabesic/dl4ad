@@ -4,6 +4,9 @@ dataset:
 	tar -xvzf deeploc.tar.gz
 	./augmentation.py
 
+environment:
+	conda env create -f conda_env.yml
+
 hpbandster:
 	git clone https://github.com/automl/HpBandSter
 	mv ./HpBandSter/hpbandster .
