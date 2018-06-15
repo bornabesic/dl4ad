@@ -46,10 +46,10 @@ class GoogleMapPlotter(object):
         self.color_dict = mpl_color_map
         self.html_color_codes = html_color_codes
 
-    @classmethod
-    def from_geocode(cls, location_string, zoom=13):
-        lat, lng = cls.geocode(location_string)
-        return cls(lat, lng, zoom)
+    # @classmethod
+    # def from_geocode(cls, location_string, zoom=13):
+    #     lat, lng = cls.geocode(location_string)
+    #     return cls(lat, lng, zoom)
 
     # @classmethod
     # def geocode(self, location_string):
