@@ -34,7 +34,7 @@ args_parser.add_argument(
 args = args_parser.parse_args()
 
 # Parameters
-LOSS_BETA = int(args.model_path.split("_")[1])
+LOSS_BETA = float(args.model_path.split("_")[1])
 MODE = args.mode
 ARCHITECTURE = args.architecture
 print("Beta: {}".format(LOSS_BETA))
