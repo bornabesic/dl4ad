@@ -1,6 +1,9 @@
 from gmplot import gmplot
+import utm
 
-lat, lng, rot = 48.013208, 7.833163, 0
+zone = (32, "U")
+lat, lng = utm.to_latlon(412940.751955, 5318560.37949, *zone)
+rot = 0
 
 # Place map
 gmap = gmplot.GoogleMapPlotter(lat, lng, 10)
