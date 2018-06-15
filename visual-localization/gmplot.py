@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import json
 import math
 import os
-import requests
+# import requests
 import warnings
 
 from collections import namedtuple
@@ -51,13 +51,13 @@ class GoogleMapPlotter(object):
         lat, lng = cls.geocode(location_string)
         return cls(lat, lng, zoom)
 
-    @classmethod
-    def geocode(self, location_string):
-        geocode = requests.get(
-            'http://maps.googleapis.com/maps/api/geocode/json?address="%s"' % location_string)
-        geocode = json.loads(geocode.text)
-        latlng_dict = geocode['results'][0]['geometry']['location']
-        return latlng_dict['lat'], latlng_dict['lng']
+    # @classmethod
+    # def geocode(self, location_string):
+    #     geocode = requests.get(
+    #         'http://maps.googleapis.com/maps/api/geocode/json?address="%s"' % location_string)
+    #     geocode = json.loads(geocode.text)
+    #     latlng_dict = geocode['results'][0]['geometry']['location']
+    #     return latlng_dict['lat'], latlng_dict['lng']
 
     def grid(self, slat, elat, latin, slng, elng, lngin):
         self.gridsetting = [slat, elat, latin, slng, elng, lngin]
