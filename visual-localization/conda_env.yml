@@ -13,3 +13,4 @@ dependencies:
   - matplotlib
   - numpy
   - scipy
+  - requests
