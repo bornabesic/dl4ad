@@ -1,5 +1,6 @@
 import time
 import torch
+import numpy as np
 
 def lines(file_path, encoding = "utf-8"):
     with open(file_path, "rt", encoding = encoding) as f:
@@ -23,6 +24,8 @@ def print_torch_cuda_mem_usage():
     alloc_percentage = (alloc_mem / max_mem) * 100
     print("CUDA memory usage: {:0.2f} MiB / {:1.2f} MiB ({:2.2f} %)".format(alloc_mem, max_mem, alloc_percentage))
 
+def rad2deg(rad):
+    return 180 / np.pi * rad
 
 class Stopwatch:
 
