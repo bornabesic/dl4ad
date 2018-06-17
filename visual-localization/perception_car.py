@@ -77,10 +77,9 @@ def remapCameraName(path):
     return None
 
 
-class PerceptionCarDataset(Dataset):
-    def __init__(self, db_path, width, height, calibration_dir, return_paths = False):
-        self.width = width
-        self.height = height
+class PerceptionCarDatasetRaw(Dataset):
+
+    def __init__(self, db_path, calibration_dir, return_paths = False):
         self.return_paths = return_paths
         self.calibration_info = {}
         self.db_path = db_path
@@ -156,17 +155,13 @@ class PerceptionCarDataset(Dataset):
             imgs[idx] = torch.from_numpy(np.expand_dims(np.array(imgs[idx]), 0))
         return imgs
 
-    def normImages(self, imgs):
-        for idx in range(len(imgs)):
-            imgs[idx] = normalizeForSeg(imgs[idx])
-        return imgs
-
     def __getitem__(self, index):
         image_path, pose = self.data[index]
         t, q = pose
 
         camera_name = remapCameraName(image_path)
 
+        image_path_ret = image_path
         image_path = os.path.join(self.db_path, image_path)
 
         # Calculate camera transformation
@@ -179,22 +174,22 @@ class PerceptionCarDataset(Dataset):
         # Read images
         image = Image.open(image_path)
 
-        # Resizing affects the camera focallength.
-        w_ratio = float(self.width) / float(image.size[0])
-        h_ratio = float(self.height) / float(image.size[1])
+        # # Resizing affects the camera focallength.
+        # w_ratio = float(self.width) / float(image.size[0])
+        # h_ratio = float(self.height) / float(image.size[1])
 
-        camera_intrisics[0, 0, 0] = camera_intrisics[0, 0, 0] * w_ratio
-        camera_intrisics[0, 1, 1] = camera_intrisics[0, 1, 1] * h_ratio
-        camera_intrisics[0, 0, 2] = camera_intrisics[0, 0, 2] * w_ratio
-        camera_intrisics[0, 1, 2] = camera_intrisics[0, 1, 2] * h_ratio
-        new_size = (self.width, self.height)
+        # camera_intrisics[0, 0, 0] = camera_intrisics[0, 0, 0] * w_ratio
+        # camera_intrisics[0, 1, 1] = camera_intrisics[0, 1, 1] * h_ratio
+        # camera_intrisics[0, 0, 2] = camera_intrisics[0, 0, 2] * w_ratio
+        # camera_intrisics[0, 1, 2] = camera_intrisics[0, 1, 2] * h_ratio
+        # new_size = (self.width, self.height)
 
-        image = self.resizeLinear1(image, new_size)
+        # image = self.resizeLinear1(image, new_size)
         image = self.imageToTensor(image)
 
         # NOTE: The calculated camera transformation is from timestep t to t+1
         if self.return_paths:
-                return image, R_camera, T_camera, R_final_inv, T_final_inv, self.origin, image_path
+                return image, R_camera, T_camera, R_final_inv, T_final_inv, self.origin, image_path_ret
 
         return image, R_camera, T_camera, R_final_inv, T_final_inv, self.origin, camera_intrisics
 
