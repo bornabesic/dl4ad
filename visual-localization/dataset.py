@@ -6,7 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from PIL import Image
 
-from utils import read_table
+from utils import read_table, lines
 from preprocessing import default_preprocessing, validation_resize, validation_crops, validation_tensor
 
 class DeepLoc(Dataset):
@@ -67,6 +67,59 @@ class DeepLocAugmented(DeepLoc):
                 self.data.append((image_path, pose))
 
         self.size = len(self.data)
+
+class PerceptionCarDataset(Dataset):
+    def __init__(self, mode, preprocess = default_preprocessing):
+        self.data = []
+        self.preprocess = preprocess
+
+        if mode not in ("train", "test", "all"):
+            raise ValueError("Only 'train' and 'test' modes are available.")
+
+        if mode == "all":
+            mode = ""
+
+        mode_path = os.path.join("PerceptionCarDataset", mode)
+
+        origin_path = os.path.join(mode_path, "origin.txt")
+        for line in lines(origin_path):
+            self.origin = torch.Tensor(tuple(map(float, line.split(" "))))
+
+        camera_paths = [
+            os.path.join("front", "center"),
+            os.path.join("front", "left"),
+            os.path.join("front", "right"),
+            os.path.join("back", "center"),
+            os.path.join("back", "left"),
+            os.path.join("back", "right")
+        ]
+
+        for camera_path in camera_paths:
+            poses_path = os.path.join(mode_path, camera_path, "poses.txt")
+
+            for filename, x, y, qw, qx, qy, qz in read_table(
+                poses_path,
+                types = (str, float, float, float, float, float, float),
+                delimiter = " "):
+                    pose = (x, y, qw, qx, qy, qz)
+                    image_path = os.path.join(mode_path, camera_path, filename)
+                    self.data.append((image_path, camera_path, pose))
+
+        self.size = len(self.data)
+
+    def __len__(self):
+        return self.size
+
+    def __getitem__(self, idx):
+        image_path, camera_id, pose = self.data[idx]
+        image = Image.open(image_path)
+        if self.preprocess is not None:
+            image = self.preprocess(image)
+
+        x, y, qw, qx, qy, qz = pose
+
+        p = torch.Tensor([x, y, qw, qx, qy, qz])
+        return (image, camera_id, p)
 
 # def make_train_valid_loader(data, valid_percentage, batch_size = 4, num_workers = 1, pin_memory = True):
 #     num_samples = len(data)
