@@ -27,6 +27,24 @@ def print_torch_cuda_mem_usage():
 def rad2deg(rad):
     return 180 / np.pi * rad
 
+class combine_generators:
+
+    def __init__(self, *args):
+        self.generators = args
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+
+        outs = map(lambda g: next(g), self.generators)
+
+        if len(outs) != len(self.generators):
+            raise StopIteration
+
+        return outs
+
+
 class Stopwatch:
 
     def __init__(self):
