@@ -1,7 +1,13 @@
+import torch
+import cv2
+import numpy as np
 import cartopy.crs as ccrs
 from cartopy.io.img_tiles import OSM
 import matplotlib.pyplot as plt
 import utm
+from dataset import PerceptionCarDataset
+from transformations import euler_from_quaternion
+from utils import rad2deg
 
 class PosePlotter:
 
@@ -64,8 +70,20 @@ class PosePlotter:
 
 
 if __name__ == "__main__":
-    x, y = 412940.751955, 5318560.37949
-    rot = 0
 
-    plotter = PosePlotter(update_interval = 10, trajectory = False)
-    plotter.update(x, y)
+    camera = "front/center"
+    plotter = PosePlotter(update_interval = 0.02, trajectory = False)
+    data = PerceptionCarDataset("all", preprocess = None)
+
+    for image, camera_id, pose in filter(lambda item: item[1] == camera, data):
+        x, y, qw, qx, qy, qz = pose
+        # Global pose
+        x, y, _ = torch.Tensor([x, y, 0]) + data.origin
+        lat, lng = PosePlotter.utm2latlng(x, y)
+        _, _, theta = euler_from_quaternion([qw, qx, qy, qz])
+        azimuth = rad2deg(-theta)
+        print(lat, lng, azimuth)
+        plotter.update(x, y)
+        image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        cv2.imshow(camera, image_cv)
+        cv2.waitKey(1)
