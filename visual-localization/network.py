@@ -26,7 +26,7 @@ class PoseNet(nn.Module):
 
         # Stem network
         self.stem_network = nn.Sequential(
-            nn.Conv2d(in_channels = 3, out_channels = 64, kernel_size = 7, stride = 2),
+            nn.Conv2d(in_channels = 18, out_channels = 64, kernel_size = 7, stride = 2),
             nn.MaxPool2d(kernel_size = 3, stride = 2),
             nn.ReLU(True),
             #
@@ -137,7 +137,7 @@ class PoseNet(nn.Module):
         self.final_regressor = nn.Sequential(
             nn.Linear(1024, 2048),
             nn.ReLU(True),
-            nn.Linear(2048, 7)
+            nn.Linear(2048, 6)
         )
 
         self.apply(xavier_initialization)
@@ -179,7 +179,7 @@ class PoseNetSimple(nn.Module):
 
         # Stem network
         self.stem_network = nn.Sequential(
-            nn.Conv2d(in_channels = 3, out_channels = 64, kernel_size = 7, stride = 2),
+            nn.Conv2d(in_channels = 18, out_channels = 64, kernel_size = 7, stride = 2),
             nn.MaxPool2d(kernel_size = 3, stride = 2),
             nn.ReLU(True),
             #
@@ -197,7 +197,7 @@ class PoseNetSimple(nn.Module):
             nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
             nn.ReLU(True),
             nn.Dropout(p = 0.5),
-            nn.Linear(1024, 7)
+            nn.Linear(1024, 6)
         )
 
         # Inceptions 3

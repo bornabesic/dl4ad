@@ -5,9 +5,10 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data.sampler import SubsetRandomSampler
 from PIL import Image
+import torchvision.transforms as transforms
 
 from utils import read_table, lines
-from preprocessing import default_preprocessing, validation_resize, validation_crops, validation_tensor
+from preprocessing import default_preprocessing, validation_resize, validation_crops, validation_tensor, validation_preprocessing
 
 class DeepLoc(Dataset):
 
@@ -73,37 +74,43 @@ class PerceptionCarDataset(Dataset):
         self.data = []
         self.preprocess = preprocess
 
-        if mode not in ("train", "test", "all"):
+        if mode not in ("train", "validation", "test", "all"):
             raise ValueError("Only 'train' and 'test' modes are available.")
 
         if mode == "all":
             mode = ""
 
-        mode_path = os.path.join("PerceptionCarDataset", mode)
+        set_path = "PerceptionCarDataset"
 
-        origin_path = os.path.join(mode_path, "origin.txt")
-        for line in lines(origin_path):
-            self.origin = torch.Tensor(tuple(map(float, line.split(" "))))
+        #origin_path = os.path.join(set_path, "origin.txt")
+        #for line in lines(origin_path):
+       #    self.origin = torch.Tensor(tuple(map(float, line.split(" "))))
 
-        camera_paths = [
-            os.path.join("front", "center"),
-            os.path.join("front", "left"),
-            os.path.join("front", "right"),
-            os.path.join("back", "center"),
-            os.path.join("back", "left"),
-            os.path.join("back", "right")
-        ]
+        #camera_paths = [
+         #   os.path.join("front", "center"),
+          #  os.path.join("front", "left"),
+         #   os.path.join("front", "right"),
+          #  os.path.join("back", "center"),
+           # os.path.join("back", "left"),
+            #os.path.join("back", "right")
+        #]
 
-        for camera_path in camera_paths:
-            poses_path = os.path.join(mode_path, camera_path, "poses.txt")
+        #for camera_path in camera_paths:
+         #   poses_path = os.path.join(mode_path, camera_path, "poses.txt")'''
 
-            for filename, x, y, qw, qx, qy, qz in read_table(
-                poses_path,
-                types = (str, float, float, float, float, float, float),
-                delimiter = " "):
-                    pose = (x, y, qw, qx, qy, qz)
-                    image_path = os.path.join(mode_path, camera_path, filename)
-                    self.data.append((image_path, camera_path, pose))
+        poses_path = os.path.join(set_path, mode + ".txt")
+        for filename1,filename2,filename3,filename4,filename5,filename6, x, y, qw, qx, qy, qz in read_table(
+            poses_path,
+            types = (str,str,str,str,str,str, float, float, float, float, float, float),
+            delimiter = ","):
+                pose = (x, y, qw, qx, qy, qz)
+                image_path1 = os.path.join(set_path, filename1)
+                image_path2 = os.path.join(set_path, filename2)
+                image_path3 = os.path.join(set_path, filename3)
+                image_path4 = os.path.join(set_path, filename4)
+                image_path5 = os.path.join(set_path, filename5)
+                image_path6 = os.path.join(set_path, filename6)
+                self.data.append((image_path1,image_path2,image_path3,image_path4,image_path6,image_path6, pose))
 
         self.size = len(self.data)
 
@@ -111,15 +118,37 @@ class PerceptionCarDataset(Dataset):
         return self.size
 
     def __getitem__(self, idx):
-        image_path, camera_id, pose = self.data[idx]
-        image = Image.open(image_path)
+        image_path1,image_path2,image_path3,image_path4,image_path5,image_path6, pose = self.data[idx]
+        
+        image1 = Image.open(image_path1)
+        image2 = Image.open(image_path2)
+        image3 = Image.open(image_path3)
+        image4 = Image.open(image_path4)
+        image5 = Image.open(image_path5)
+        image6 = Image.open(image_path6)
+
         if self.preprocess is not None:
-            image = self.preprocess(image)
+            image1 = self.preprocess(image1)
+            image2 = self.preprocess(image2)
+            image3 = self.preprocess(image3)
+            image4 = self.preprocess(image4)
+            image5 = self.preprocess(image5)
+            image6 = self.preprocess(image6)
+
+        # Concatinate all images (each 3 layer) to one image with 18 layers
+    
+        image = torch.cat((image1, image2, image3, image4, image5, image6),dim=0)
+        
+        #image_uns = torch.cat((image1.unsqueeze(0), image2.unsqueeze(0), image3.unsqueeze(0), image4.unsqueeze(0), image5.unsqueeze(0), image6.unsqueeze(0)),dim=1)
+       # image = image_uns
+        #image = torch.squeeze(image,0)
+        #print(image1.size())
+        #print(image.size())
 
         x, y, qw, qx, qy, qz = pose
-
         p = torch.Tensor([x, y, qw, qx, qy, qz])
-        return (image, camera_id, p)
+
+        return (image, p)
 
 # def make_train_valid_loader(data, valid_percentage, batch_size = 4, num_workers = 1, pin_memory = True):
 #     num_samples = len(data)
@@ -191,18 +220,25 @@ def evaluate_median(model, criterion, data, device):
     losses = []
 
     for image, p in data:
-
-        image = validation_resize(image)
-        crops = validation_crops(image)
-        crops = map(lambda c: validation_tensor(c), crops)
-
+        #image = validation_resize(image)
+        #crops = validation_crops(image)
+        #crops = map(lambda c: validation_tensor(c), crops)
+       
+        #Image is already preprocessed
         ps_crops = []
-        for crop in crops:
-            crop = crop.expand(1, -1, -1, -1)
-            crop = crop.to(device = device)
-            p_outs = model(crop)
-            p_out = p_outs[-1]
-            ps_crops.append(p_out)
+        image = image.to(device = device)
+        p_out = model(image)
+        ps_crops.append(p_out)
+
+        # Original routine
+        # for crop in crops:
+        #     print(crop.size())
+        #     crop = crop.expand(1, -1, -1, -1)
+        #     crop = crop.to(device = device)
+        #     p_outs = model(crop)
+        #     p_out = p_outs[-1]
+        #     ps_crops.append(p_out)
+
 
         ps_crops = torch.stack(ps_crops, dim = 0)
         p_avg = torch.mean(ps_crops, dim = 0)

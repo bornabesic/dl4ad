@@ -3,7 +3,7 @@ import numpy as np
 
 
 
-db_path = "/home/fabian/dl4ad/visual-localization/PerceptionCarDataset/"
+db_path = "PerceptionCarDataset/"
 fc_path = "front/center/"
 fl_path = "front/left/"
 fr_path = "front/right/"
@@ -35,6 +35,11 @@ f_br = open(db_path+br_path+"poses.txt")
 f_train = open(db_path+"train.txt","w")
 f_valid = open(db_path+"validation.txt","w")
 
+# Just for testing because of missing write permissions on the dataset-directory
+#f_train = open("/home/stillerf/virtpython/dl4ad/visual-localization/train.txt","w")
+#f_valid = open("/home/stillerf/virtpython/dl4ad/visual-localization/validation.txt","w")
+
+
 for counter in range(samples):
     line_fc = f_fc.readline()
     line_fl = f_fl.readline()
@@ -50,13 +55,21 @@ for counter in range(samples):
     elements_bl = line_bl.split(" ")
     elements_br = line_br.split(" ")
     
-    line_new = fl_path+ elements_fl[0]+","
-    line_new += fr_path+elements_fr[0]+","
-    line_new += bc_path+ elements_bc[0]+","
-    line_new += bl_path+ elements_bl[0]+","
-    line_new += br_path+ elements_br[0]+","
+    line_new = fl_path+ elements_fl[0]
+    line_new += ","+fr_path+elements_fr[0]
+    line_new += ","+bc_path+ elements_bc[0]
+    line_new += ","+bl_path+ elements_bl[0]
+    line_new += ","+br_path+ elements_br[0]
+    
+    first_element = True
     for element in elements_fc:
-        line_new += element+","
+        if first_element:
+            line_new += ","+fc_path + element 
+            first_element = False
+        else:
+            line_new += ","+element
+
+        
         
     
     #,bl_path+ elements_bl[0], br_path+elements_br[0], *elements_fc[1:]))
