@@ -139,12 +139,6 @@ class PerceptionCarDataset(Dataset):
     
         image = torch.cat((image1, image2, image3, image4, image5, image6),dim=0)
         
-        #image_uns = torch.cat((image1.unsqueeze(0), image2.unsqueeze(0), image3.unsqueeze(0), image4.unsqueeze(0), image5.unsqueeze(0), image6.unsqueeze(0)),dim=1)
-       # image = image_uns
-        #image = torch.squeeze(image,0)
-        #print(image1.size())
-        #print(image.size())
-
         x, y, qw, qx, qy, qz = pose
         p = torch.Tensor([x, y, qw, qx, qy, qz])
 
@@ -220,17 +214,11 @@ def evaluate_median(model, criterion, data, device):
     losses = []
 
     for image, p in data:
+        # Original routine
         #image = validation_resize(image)
         #crops = validation_crops(image)
         #crops = map(lambda c: validation_tensor(c), crops)
-       
-        #Image is already preprocessed
-        ps_crops = []
-        image = image.to(device = device)
-        p_out = model(image)
-        ps_crops.append(p_out)
-
-        # Original routine
+              
         # for crop in crops:
         #     print(crop.size())
         #     crop = crop.expand(1, -1, -1, -1)
@@ -240,21 +228,35 @@ def evaluate_median(model, criterion, data, device):
         #     ps_crops.append(p_out)
 
 
-        ps_crops = torch.stack(ps_crops, dim = 0)
-        p_avg = torch.mean(ps_crops, dim = 0)
+        #ps_crops = torch.stack(ps_crops, dim = 0)
+        #p_avg = torch.mean(ps_crops, dim = 0)
+        #  p = p.expand(1, -1)
+        # p = p.to(device = device)
+        # p_avg = p_avg.to(device = device)
 
+        # loss = criterion(p_avg, p)
+        # losses.append(loss.item())
+
+        #Image is already preprocessed
+        
+        image = image.unsqueeze(0)
+        image = image.to(device = device)
+        p_out = model(image)
+        
+        p_out = torch.stack(p_out, dim = 0)
+        p_out = torch.mean(p_out, dim = 0)
+        p_out = p_out.to(device = device)
         p = p.expand(1, -1)
         p = p.to(device = device)
-        p_avg = p_avg.to(device = device)
 
-        loss = criterion(p_avg, p)
+        loss = criterion(p_out, p)
         losses.append(loss.item())
 
-        x = p[:, :3].cpu().detach().numpy()
-        q = p[:, 3:].cpu().detach().numpy()
-        x_out = p_avg[:, :3].cpu().detach().numpy()
-        q_out = p_avg[:, 3:].cpu().detach().numpy()
-
+        x = p[:, :2].cpu().detach().numpy()
+        q = p[:, 2:].cpu().detach().numpy()
+        x_out = p_out[:, :2].cpu().detach().numpy()
+        q_out = p_out[:, 2:].cpu().detach().numpy()
+        
         error_x, theta = meters_and_degrees_error(x, q, x_out, q_out)
 
         x_errors.append(error_x)
