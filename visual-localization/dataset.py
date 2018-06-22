@@ -74,17 +74,16 @@ class PerceptionCarDataset(Dataset):
         self.data = []
         self.preprocess = preprocess
 
-        if mode not in ("train", "validation", "test", "all"):
-            raise ValueError("Only 'train' and 'test' modes are available.")
+        if mode not in ("train", "validation", "test", "visualize"):
+            raise ValueError("Invalid mode.")
 
-        if mode == "all":
-            mode = ""
+        self.mode = mode
 
         set_path = "PerceptionCarDataset"
-
-        #origin_path = os.path.join(set_path, "origin.txt")
-        #for line in lines(origin_path):
-       #    self.origin = torch.Tensor(tuple(map(float, line.split(" "))))
+        
+        origin_path = os.path.join(set_path, "origin.txt")
+        for line in lines(origin_path):
+          self.origin = torch.Tensor(tuple(map(float, line.split(" "))))
 
         #camera_paths = [
          #   os.path.join("front", "center"),
@@ -98,19 +97,30 @@ class PerceptionCarDataset(Dataset):
         #for camera_path in camera_paths:
          #   poses_path = os.path.join(mode_path, camera_path, "poses.txt")'''
 
-        poses_path = os.path.join(set_path, mode + ".txt")
-        for filename1,filename2,filename3,filename4,filename5,filename6, x, y, qw, qx, qy, qz in read_table(
+        if mode == "visualize":
+            mode_path = os.path.join(set_path, "front", "center")
+            poses_path = os.path.join(mode_path, "poses.txt")
+            for filename, x, y, qw, qx, qy, qz in read_table(
             poses_path,
-            types = (str,str,str,str,str,str, float, float, float, float, float, float),
-            delimiter = ","):
+            types = (str, float, float, float, float, float, float),
+            delimiter = " "):
                 pose = (x, y, qw, qx, qy, qz)
-                image_path1 = os.path.join(set_path, filename1)
-                image_path2 = os.path.join(set_path, filename2)
-                image_path3 = os.path.join(set_path, filename3)
-                image_path4 = os.path.join(set_path, filename4)
-                image_path5 = os.path.join(set_path, filename5)
-                image_path6 = os.path.join(set_path, filename6)
-                self.data.append((image_path1,image_path2,image_path3,image_path4,image_path6,image_path6, pose))
+                image_path = os.path.join(mode_path, filename)
+                self.data.append((image_path, pose))
+        else:
+            poses_path = os.path.join(set_path, mode + ".txt")
+            for filename1,filename2,filename3,filename4,filename5,filename6, x, y, qw, qx, qy, qz in read_table(
+                poses_path,
+                types = (str,str,str,str,str,str, float, float, float, float, float, float),
+                delimiter = " "):
+                    pose = (x, y, qw, qx, qy, qz)
+                    image_path1 = os.path.join(set_path, filename1)
+                    image_path2 = os.path.join(set_path, filename2)
+                    image_path3 = os.path.join(set_path, filename3)
+                    image_path4 = os.path.join(set_path, filename4)
+                    image_path5 = os.path.join(set_path, filename5)
+                    image_path6 = os.path.join(set_path, filename6)
+                    self.data.append((image_path1,image_path2,image_path3,image_path4,image_path6,image_path6, pose))
 
         self.size = len(self.data)
 
@@ -118,26 +128,32 @@ class PerceptionCarDataset(Dataset):
         return self.size
 
     def __getitem__(self, idx):
-        image_path1,image_path2,image_path3,image_path4,image_path5,image_path6, pose = self.data[idx]
+        if self.mode == "visualize":
+            image_path, pose = self.data[idx]
+            image = Image.open(image_path)
+            if self.preprocess is not None:
+                image = self.preprocess(image)
+        else:
+            image_path1,image_path2,image_path3,image_path4,image_path5,image_path6, pose = self.data[idx]
         
-        image1 = Image.open(image_path1)
-        image2 = Image.open(image_path2)
-        image3 = Image.open(image_path3)
-        image4 = Image.open(image_path4)
-        image5 = Image.open(image_path5)
-        image6 = Image.open(image_path6)
+            image1 = Image.open(image_path1)
+            image2 = Image.open(image_path2)
+            image3 = Image.open(image_path3)
+            image4 = Image.open(image_path4)
+            image5 = Image.open(image_path5)
+            image6 = Image.open(image_path6)
 
-        if self.preprocess is not None:
-            image1 = self.preprocess(image1)
-            image2 = self.preprocess(image2)
-            image3 = self.preprocess(image3)
-            image4 = self.preprocess(image4)
-            image5 = self.preprocess(image5)
-            image6 = self.preprocess(image6)
+            if self.preprocess is not None:
+                image1 = self.preprocess(image1)
+                image2 = self.preprocess(image2)
+                image3 = self.preprocess(image3)
+                image4 = self.preprocess(image4)
+                image5 = self.preprocess(image5)
+                image6 = self.preprocess(image6)
 
-        # Concatinate all images (each 3 layer) to one image with 18 layers
-    
-        image = torch.cat((image1, image2, image3, image4, image5, image6),dim=0)
+            # Concatinate all images (each 3 layer) to one image with 18 layers
+        
+            image = torch.cat((image1, image2, image3, image4, image5, image6),dim=0)
         
         x, y, qw, qx, qy, qz = pose
         p = torch.Tensor([x, y, qw, qx, qy, qz])

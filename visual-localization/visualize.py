@@ -99,12 +99,11 @@ class PosePlotter:
 
 if __name__ == "__main__":
 
-    camera = "front/center"
     plotter = PosePlotter(update_interval = 0.02, trajectory = False)
 
-    data = PerceptionCarDataset("all", preprocess = None)
+    data = PerceptionCarDataset("visualize", preprocess = None)
 
-    for image, camera_id, pose in filter(lambda item: item[1] == camera, data):
+    for image, pose in data:
         x, y, qw, qx, qy, qz = pose
         # Global pose
         x, y, _ = torch.Tensor([x, y, 0]) + data.origin
@@ -114,5 +113,5 @@ if __name__ == "__main__":
         print(lat, lng, azimuth)
         plotter.update(x, y, theta)
         image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-        cv2.imshow(camera, image_cv)
+        cv2.imshow("front/center", image_cv)
         cv2.waitKey(1)
