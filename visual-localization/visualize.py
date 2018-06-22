@@ -38,7 +38,7 @@ class PosePlotter:
         self.data = plt.plot(
             [0], [0],
             color = "red",
-            marker = PosePlotter.get_marker(),
+            marker = "." if self.trajectory else PosePlotter.get_marker(),
             transform = ccrs.Geodetic(),
         )[0]
 
@@ -55,9 +55,6 @@ class PosePlotter:
     def update(self, x, y, theta):
         lat, lng = PosePlotter.utm2latlng(x, y)
         self.data.set_visible(True)
-
-        new_marker = self.marker_reference.transformed(matplotlib.transforms.Affine2D().rotate_deg(rad2deg(theta)))
-        self.data.set_marker(new_marker)
         
         if self.trajectory:
             self.lats.append(lat)
@@ -66,6 +63,8 @@ class PosePlotter:
             self.data.set_xdata([self.lngs[: (i + 1)]])
             self.data.set_ydata([self.lats[: (i + 1)]])
         else:
+            new_marker = self.marker_reference.transformed(matplotlib.transforms.Affine2D().rotate_deg(rad2deg(theta)))
+            self.data.set_marker(new_marker)
             self.data.set_xdata([lng])
             self.data.set_ydata([lat])
 
@@ -99,7 +98,7 @@ class PosePlotter:
 
 if __name__ == "__main__":
 
-    plotter = PosePlotter(update_interval = 0.02, trajectory = False)
+    plotter = PosePlotter(update_interval = 0.02, trajectory = True)
 
     data = PerceptionCarDataset("visualize", preprocess = None)
 
