@@ -71,7 +71,7 @@ for i, (line_fc, line_fl, line_fr, line_bc, line_bl, line_br) in enumerate(zippe
     line_new += ","+br_path+ elements_br[0]
 
     line_new = delimiter.join([
-        fl_path + elements_fc[0],
+        fc_path + elements_fc[0],
         fl_path + elements_fl[0],
         fr_path + elements_fr[0],
         bc_path + elements_bc[0],
