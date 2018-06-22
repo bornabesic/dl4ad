@@ -54,6 +54,8 @@ train_indices = all_indices[:last_train_idx]
 valid_indices = all_indices[last_train_idx:last_valid_idx]
 test_indices = all_indices[last_valid_idx:]
 
+delimiter = " "
+
 for i, (line_fc, line_fl, line_fr, line_bc, line_bl, line_br) in enumerate(zipped):
     elements_fc = line_fc.split(" ")
     elements_fl = line_fl.split(" ")
@@ -68,13 +70,23 @@ for i, (line_fc, line_fl, line_fr, line_bc, line_bl, line_br) in enumerate(zippe
     line_new += ","+bl_path+ elements_bl[0]
     line_new += ","+br_path+ elements_br[0]
 
-    first_element = True
-    for element in elements_fc:
-        if first_element:
-            line_new += ","+fc_path + element 
-            first_element = False
-        else:
-            line_new += ","+element
+    line_new = delimiter.join([
+        fl_path + elements_fc[0],
+        fl_path + elements_fl[0],
+        fr_path + elements_fr[0],
+        bc_path + elements_bc[0],
+        bl_path + elements_bl[0],
+        br_path + elements_br[0]
+    ] + elements_fc[1:]
+    )
+
+    # first_element = True
+    # for element in elements_fc:
+    #     if first_element:
+    #         line_new += ","+fc_path + element 
+    #         first_element = False
+    #     else:
+    #         line_new += ","+element
 
         
         
