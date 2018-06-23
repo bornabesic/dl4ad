@@ -44,7 +44,7 @@ class PoseNet(nn.Module):
             nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
             nn.ReLU(True),
             nn.Dropout(p = 0.7),
-            nn.Linear(1024, 7)
+            nn.Linear(1024, 6)
         )
 
         self.side_network_4d = nn.Sequential(
@@ -55,7 +55,7 @@ class PoseNet(nn.Module):
             nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
             nn.ReLU(True),
             nn.Dropout(p = 0.7),
-            nn.Linear(1024, 7)
+            nn.Linear(1024, 6)
         )
 
         # Inceptions 3

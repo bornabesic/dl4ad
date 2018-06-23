@@ -223,50 +223,23 @@ def make_loader(data, batch_size = 4, shuffle = True, num_workers = 0, pin_memor
 #     avg_loss = total_loss / num_iters
 #     return avg_loss
 
-def evaluate_median(model, criterion, data, device):
+def evaluate_median(model, criterion, loader, device): # Expects a loader with batch_size = 1
     model.eval()
     x_errors = []
     q_errors = []
     losses = []
 
-    for image, p in data:
-        # Original routine
-        #image = validation_resize(image)
-        #crops = validation_crops(image)
-        #crops = map(lambda c: validation_tensor(c), crops)
-              
-        # for crop in crops:
-        #     print(crop.size())
-        #     crop = crop.expand(1, -1, -1, -1)
-        #     crop = crop.to(device = device)
-        #     p_outs = model(crop)
-        #     p_out = p_outs[-1]
-        #     ps_crops.append(p_out)
-
-
-        #ps_crops = torch.stack(ps_crops, dim = 0)
-        #p_avg = torch.mean(ps_crops, dim = 0)
-        #  p = p.expand(1, -1)
-        # p = p.to(device = device)
-        # p_avg = p_avg.to(device = device)
-
-        # loss = criterion(p_avg, p)
-        # losses.append(loss.item())
-
-        #Image is already preprocessed
-        
-        image = image.unsqueeze(0)
+    for image, p in loader:
         image = image.to(device = device)
-        p_out = model(image)
-        
-        p_out = torch.stack(p_out, dim = 0)
-        p_out = torch.mean(p_out, dim = 0)
+        p_outs = model(image)
+        p_out = p_outs[-1].expand(1, -1)
         p_out = p_out.to(device = device)
+
         p = p.expand(1, -1)
         p = p.to(device = device)
 
-        loss = criterion(p_out, p)
-        losses.append(loss.item())
+        loss_out = criterion(p_out, p)
+        losses.append(loss_out.item())
 
         x = p[:, :2].cpu().detach().numpy()
         q = p[:, 2:].cpu().detach().numpy()

@@ -133,6 +133,7 @@ logger.log("Device: {}".format(device))
 
 # Generate the data loaders
 train_loader = make_loader(train_data, batch_size = BATCH_SIZE, num_workers = 4)
+valid_loader = make_loader(valid_data, batch_size = 1, num_workers = 4)
 
 # Define the model
 net = arch_class()
@@ -214,7 +215,7 @@ for epoch in range(EPOCHS):
     # avg_loss_valid = evaluate(net, criterion, valid_loader, device)
     # y_loss_valid.append(avg_loss_valid)
     # logger.log("Average validation loss: {}".format(avg_loss_valid))
-    x_error_median, q_error_median, loss_median = evaluate_median(net, criterion, valid_data, device)
+    x_error_median, q_error_median, loss_median = evaluate_median(net, criterion, valid_loader, device)
     y_loss_valid.append(loss_median)
     logger.log("Median validation error: {:.2f} m, {:.2f} °".format(x_error_median, q_error_median))
     logger.log("Median validation loss: {}".format(loss_median))
