@@ -1,6 +1,12 @@
 
-from torchvision.transforms import CenterCrop, FiveCrop, RandomCrop, Resize, Compose, ToTensor
+import torchvision.transforms
 import numpy as np
+
+#
+Resize = torchvision.transforms.Resize
+RandomCrop = torchvision.transforms.RandomCrop
+ToTensor = torchvision.transforms.ToTensor
+Compose = torchvision.transforms.Compose
 
 # Convert the image from RGBA to RGB
 class ToRGB:
@@ -25,23 +31,9 @@ class SubtractMean(object):
         subtracted_mean_image = np.stack((ch1_new, ch2_new, ch3_new), axis = 2)
         return subtracted_mean_image
 
-default_preprocessing = Compose([
-    Resize(256), # Rescale so that the smaller edge is 256 pxs
-    RandomCrop(size = (224, 224)), # Take a random 224 x 224 crop
-    SubtractMean(),
-    ToTensor()
-])
-
-validation_preprocessing = Compose([
-    Resize(256), # Rescale so that the smaller edge is 256 pxs
-    FiveCrop(size = (224, 224)), # Take a random 224 x 224 crop
-    SubtractMean(),
-    ToTensor()
-])
-
-validation_resize = Resize(256)
-validation_crops = FiveCrop(size = (224, 224))
-validation_tensor = Compose([
-    SubtractMean(),
-    ToTensor()
-])
+# validation_resize = Resize(256)
+# validation_crops = FiveCrop(size = (224, 224))
+# validation_tensor = Compose([
+#     SubtractMean(),
+#     ToTensor()
+# ])

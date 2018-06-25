@@ -72,7 +72,7 @@ net.to(device = device)
 
 # Dataset
 data_class = getattr(dataset, DATASET)
-data = data_class(MODE)
+data = data_class(MODE, preprocess = data_class.valid_preprocessing)
 data_loader = make_loader(data, batch_size = 1, num_workers = 4)
 print("Samples: {}".format(len(data)))
 

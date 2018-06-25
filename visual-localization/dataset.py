@@ -8,9 +8,16 @@ from PIL import Image
 import torchvision.transforms as transforms
 
 from utils import read_table, lines
-from preprocessing import default_preprocessing, validation_resize, validation_crops, validation_tensor, validation_preprocessing
+from preprocessing import Resize, RandomCrop, SubtractMean, ToTensor, Compose
 
 class DeepLoc(Dataset):
+
+    default_preprocessing = Compose([
+        Resize(256), # Rescale so that the smaller edge is 256 pxs
+        RandomCrop(size = (224, 224)), # Take a random 224 x 224 crop
+        SubtractMean(),
+        ToTensor()
+    ])
 
     def __init__(self, mode, preprocess = default_preprocessing):
         self.data = []
@@ -50,7 +57,7 @@ class DeepLoc(Dataset):
 
 class DeepLocAugmented(DeepLoc):
 
-    def __init__(self, mode, preprocess = default_preprocessing):
+    def __init__(self, mode, preprocess = DeepLoc.default_preprocessing):
         self.data = []
         self.preprocess = preprocess
 
@@ -70,6 +77,20 @@ class DeepLocAugmented(DeepLoc):
         self.size = len(self.data)
 
 class PerceptionCarDataset(Dataset):
+
+    default_preprocessing = Compose([
+        Resize(256), # Rescale so that the smaller edge is 256 pxs
+        RandomCrop(size = (224, 224)), # Take a random 224 x 224 crop
+        SubtractMean(),
+        ToTensor()
+    ])
+
+    valid_preprocessing = Compose([
+        Resize(size = (224, 224)), # Rescale so that the smaller edge is 256 pxs
+        SubtractMean(),
+        ToTensor()
+    ])
+
     def __init__(self, mode, preprocess = default_preprocessing):
         self.data = []
         self.preprocess = preprocess

@@ -15,8 +15,6 @@ import network
 from network import parameters, PoseNetSimple
 from customized_loss import Customized_Loss
 from utils import print_torch_cuda_mem_usage, Stopwatch, Logger
-from preprocessing import default_preprocessing, validation_resize, validation_crops, validation_tensor, validation_preprocessing
-
 
 # Parse CLI arguments
 args_parser = argparse.ArgumentParser(
@@ -119,7 +117,7 @@ logger = Logger("{}/{}.log.txt".format(directory, identifier), print_to_stdout =
 
 # Load the dataset
 train_data = PerceptionCarDataset("train")
-valid_data = PerceptionCarDataset("validation")
+valid_data = PerceptionCarDataset("validation", preprocess = PerceptionCarDataset.valid_preprocessing)
 logger.log("Train set size: {} samples".format(len(train_data)))
 logger.log("Validation set size: {} samples".format(len(valid_data)))
 
