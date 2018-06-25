@@ -35,38 +35,46 @@ class PosePlotter:
 
         ax.add_image(imagery, 17)
 
-        self.data = plt.plot(
-            [0], [0],
-            color = "red",
-            marker = "." if self.trajectory else PosePlotter.get_marker(),
-            transform = ccrs.Geodetic(),
-        )[0]
-
-        self.marker_reference = self.data.get_marker()
-
-        if self.trajectory:
-            self.lats = []
-            self.lngs = []
+        self.poses = dict()
 
         plt.ion()
         plt.draw()
         plt.show()
         
-    def update(self, x, y, theta):
+    def update(self, id, x, y, theta):
+
+        if id not in self.poses: # First plot
+            self.poses[id] = dict(
+                data = plt.plot(
+                    [0], [0],
+                    color = "red", # TODO Different color for each pose visualization
+                    marker = "." if self.trajectory else PosePlotter.get_marker(),
+                    transform = ccrs.Geodetic(),
+                )[0],
+                lats = [],
+                lngs = []
+            )
+            self.poses[id]["marker"] = self.poses[id]["data"].get_marker()
+        
+        pose = self.poses[id]
+        lats, lngs = pose["lats"], pose["lngs"]
+        data = pose["data"]
+        data.set_visible(True)
+
         lat, lng = PosePlotter.utm2latlng(x, y)
-        self.data.set_visible(True)
         
         if self.trajectory:
-            self.lats.append(lat)
-            self.lngs.append(lng)
-            i = len(self.lats)
-            self.data.set_xdata([self.lngs[: (i + 1)]])
-            self.data.set_ydata([self.lats[: (i + 1)]])
+            lats.append(lat)
+            lngs.append(lng)
+            i = len(lats)
+            data.set_xdata([lngs[: (i + 1)]])
+            data.set_ydata([lats[: (i + 1)]])
         else:
-            new_marker = self.marker_reference.transformed(matplotlib.transforms.Affine2D().rotate_deg(rad2deg(theta)))
-            self.data.set_marker(new_marker)
-            self.data.set_xdata([lng])
-            self.data.set_ydata([lat])
+            marker_reference = pose["marker"]
+            new_marker = marker_reference.transformed(matplotlib.transforms.Affine2D().rotate_deg(rad2deg(theta)))
+            data.set_marker(new_marker)
+            data.set_xdata([lng])
+            data.set_ydata([lat])
 
         plt.draw()
         plt.pause(self.update_interval)
@@ -98,7 +106,7 @@ class PosePlotter:
 
 if __name__ == "__main__":
 
-    plotter = PosePlotter(update_interval = 0.02, trajectory = True)
+    plotter = PosePlotter(update_interval = 0.02, trajectory = False)
 
     data = PerceptionCarDataset("visualize", preprocess = None)
 
@@ -110,7 +118,8 @@ if __name__ == "__main__":
         _, _, theta = euler_from_quaternion([qw, qx, qy, qz])
         azimuth = rad2deg(-theta)
         print(lat, lng, azimuth)
-        plotter.update(x, y, theta)
+        plotter.update("GT", x, y, theta)
+        # plotter.update("x", x + 10, y + 10, theta + 3.14) # TEST
         image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         cv2.imshow("front/center", image_cv)
         cv2.waitKey(1)
