@@ -109,18 +109,13 @@ class PerceptionCarDataset(Dataset):
                 self.data.append((image_path, pose))
         else:
             poses_path = os.path.join(set_path, mode + ".txt")
-            for filename1,filename2,filename3,filename4,filename5,filename6, x, y, qw, qx, qy, qz in read_table(
+            for *filenames, x, y, qw, qx, qy, qz in read_table(
                 poses_path,
                 types = (str,str,str,str,str,str, float, float, float, float, float, float),
                 delimiter = " "):
                     pose = (x, y, qw, qx, qy, qz)
-                    image_path1 = os.path.join(set_path, filename1)
-                    image_path2 = os.path.join(set_path, filename2)
-                    image_path3 = os.path.join(set_path, filename3)
-                    image_path4 = os.path.join(set_path, filename4)
-                    image_path5 = os.path.join(set_path, filename5)
-                    image_path6 = os.path.join(set_path, filename6)
-                    self.data.append((image_path1,image_path2,image_path3,image_path4,image_path6,image_path6, pose))
+                    image_paths = map(lambda fn: os.path.join(set_path, fn), filenames)
+                    self.data.append((*image_paths, pose))
 
         self.size = len(self.data)
 
@@ -134,26 +129,16 @@ class PerceptionCarDataset(Dataset):
             if self.preprocess is not None:
                 image = self.preprocess(image)
         else:
-            image_path1,image_path2,image_path3,image_path4,image_path5,image_path6, pose = self.data[idx]
-        
-            image1 = Image.open(image_path1)
-            image2 = Image.open(image_path2)
-            image3 = Image.open(image_path3)
-            image4 = Image.open(image_path4)
-            image5 = Image.open(image_path5)
-            image6 = Image.open(image_path6)
+            *image_paths, pose = self.data[idx]
+
+            images = map(Image.open, image_paths)
 
             if self.preprocess is not None:
-                image1 = self.preprocess(image1)
-                image2 = self.preprocess(image2)
-                image3 = self.preprocess(image3)
-                image4 = self.preprocess(image4)
-                image5 = self.preprocess(image5)
-                image6 = self.preprocess(image6)
+                images = map(self.preprocess, images)
 
             # Concatinate all images (each 3 layer) to one image with 18 layers
-        
-            image = torch.cat((image1, image2, image3, image4, image5, image6),dim=0)
+            images = tuple(images)
+            image = torch.cat(images, dim = 0)
         
         x, y, qw, qx, qy, qz = pose
         p = torch.Tensor([x, y, qw, qx, qy, qz])
