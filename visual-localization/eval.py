@@ -2,11 +2,13 @@
 
 import torch
 import argparse
+import numpy as np
 
 import dataset
 from dataset import DeepLocAugmented, make_loader, evaluate_median
 import network
 from customized_loss import Customized_Loss
+from transformations import euler_from_quaternion
 
 # Parse CLI arguments
 args_parser = argparse.ArgumentParser(
@@ -83,3 +85,31 @@ criterion = Customized_Loss(beta = LOSS_BETA)
 x_error_median, q_error_median, loss_median = evaluate_median(net, criterion, data_loader, device)
 print("Median {} error: {:.2f} m, {:.2f} °".format(MODE, x_error_median, q_error_median))
 print("Median {} loss: {}".format(MODE, loss_median))
+
+
+if VISUALIZE:
+	from visualize import PosePlotter
+
+	plotter = PosePlotter()
+	plotter.register("GT", "red")
+	plotter.register("NN prediction", "blue")
+	net.eval()
+	for images, ps in data_loader:
+		images = images.to(device = device)
+		ps = ps.to(device = device)
+		
+		ps_outs = net(images)
+		# Prediction
+		x_pred, y_pred, qw_pred, qx_pred, qy_pred, qz_pred = p_out = ps_outs[-1].view(-1).cpu().detach().numpy()
+		x_pred, y_pred, _ = np.array([x_pred, y_pred, 0]) + data.origin
+		lat_pred, lng_pred = PosePlotter.utm2latlng(x_pred, y_pred)
+		_, _, theta_pred = euler_from_quaternion([qw_pred, qx_pred, qy_pred, qz_pred])
+		# Ground truth
+		x, y, qw, qx, qy, qz = ps.view(-1).cpu().numpy()
+		x, y, _ = np.array([x, y, 0]) + data.origin
+		lat, lng = PosePlotter.utm2latlng(x, y)
+		_, _, theta = euler_from_quaternion([qw, qx, qy, qz])
+		# Visualize on the map
+		plotter.update("GT", x, y, theta)
+		plotter.update("NN prediction", x_pred, y_pred, theta_pred)
+		plotter.draw()

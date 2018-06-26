@@ -36,32 +36,42 @@ class PosePlotter:
         ax.add_image(imagery, 17)
 
         self.poses = dict()
+        self.colors = PosePlotter.color_generator()
 
         plt.ion()
+        plt.hold(True)
         plt.draw()
         plt.show()
+
+    def register(self, id, color):
+        self.poses[id] = dict(
+            data = plt.plot(
+                [0], [0],
+                color = color,
+                marker = "." if self.trajectory else PosePlotter.get_marker(),
+                transform = ccrs.Geodetic(),
+                label = id
+            )[0],
+            # label = plt.text(0, 0,
+            #     id,
+            #     transform = ccrs.Geodetic()
+            # ),
+            lats = [],
+            lngs = []
+        )
+        self.poses[id]["marker"] = self.poses[id]["data"].get_marker()
+
         
     def update(self, id, x, y, theta):
-
-        if id not in self.poses: # First plot
-            self.poses[id] = dict(
-                data = plt.plot(
-                    [0], [0],
-                    color = "red", # TODO Different color for each pose visualization
-                    marker = "." if self.trajectory else PosePlotter.get_marker(),
-                    transform = ccrs.Geodetic(),
-                )[0],
-                lats = [],
-                lngs = []
-            )
-            self.poses[id]["marker"] = self.poses[id]["data"].get_marker()
+        lat, lng = PosePlotter.utm2latlng(x, y)
         
         pose = self.poses[id]
         lats, lngs = pose["lats"], pose["lngs"]
         data = pose["data"]
+        # label = pose["label"]
         data.set_visible(True)
 
-        lat, lng = PosePlotter.utm2latlng(x, y)
+        
         
         if self.trajectory:
             lats.append(lat)
@@ -75,7 +85,11 @@ class PosePlotter:
             data.set_marker(new_marker)
             data.set_xdata([lng])
             data.set_ydata([lat])
+            # label.set_x(lng)
+            # label.set_y(lat)
 
+    def draw(self):
+        plt.legend()
         plt.draw()
         plt.pause(self.update_interval)
 
@@ -103,10 +117,22 @@ class PosePlotter:
 
         return matplotlib.path.Path(verts, codes)
 
+    @staticmethod
+    def color_generator():
+        # colors = list(matplotlib.colors.BASE_COLORS.keys())
+        colors = ["red", "blue"]
+        idx = 0
+        while True:
+            yield colors[idx]
+            idx += 1
+            if idx >= len(colors):
+                idx = 0
 
 if __name__ == "__main__":
 
     plotter = PosePlotter(update_interval = 0.02, trajectory = False)
+    plotter.register("GT", "red")
+    # plotter.register("x", "blue") # TEST
 
     data = PerceptionCarDataset("visualize", preprocess = None)
 
@@ -119,6 +145,7 @@ if __name__ == "__main__":
         azimuth = rad2deg(-theta)
         print(lat, lng, azimuth)
         plotter.update("GT", x, y, theta)
+        plotter.draw()
         # plotter.update("x", x + 10, y + 10, theta + 3.14) # TEST
         image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         cv2.imshow("front/center", image_cv)
