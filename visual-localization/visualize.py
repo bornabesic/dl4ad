@@ -50,7 +50,8 @@ class PosePlotter:
                 color = color,
                 marker = "." if self.trajectory else PosePlotter.get_marker(),
                 transform = ccrs.Geodetic(),
-                label = id
+                label = id,
+                alpha = 0.5
             )[0],
             # label = plt.text(0, 0,
             #     id,

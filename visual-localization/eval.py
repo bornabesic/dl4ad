@@ -42,9 +42,9 @@ args_parser.add_argument(
 
 args_parser.add_argument(
 	"--visualize",
-	type = str,
+	type = bool,
 	help = "Visualize the ground truth and the network output",
-	default = "validation"
+	default = True
 )
 
 args = args_parser.parse_args()
@@ -91,7 +91,7 @@ if VISUALIZE:
 	from visualize import PosePlotter
 
 	plotter = PosePlotter()
-	plotter.register("GT", "red")
+	plotter.register("Ground truth", "red")
 	plotter.register("NN prediction", "blue")
 	net.eval()
 	for images, ps in data_loader:
@@ -110,6 +110,6 @@ if VISUALIZE:
 		lat, lng = PosePlotter.utm2latlng(x, y)
 		_, _, theta = euler_from_quaternion([qw, qx, qy, qz])
 		# Visualize on the map
-		plotter.update("GT", x, y, theta)
+		plotter.update("Ground truth", x, y, theta)
 		plotter.update("NN prediction", x_pred, y_pred, theta_pred)
 		plotter.draw()
