@@ -22,7 +22,7 @@ The output of the network currently has 18 channels (6 RGB images, concatenated 
 
 ![](images/model_100.0_2018_6_26_9_22.loss.png)
 
-## Perfomance of the Google Cloud Platform
+## Google Cloud Platform performance
 Since there were many problems due to the automatic reboots of the pool computers, the training on the cloud is preferred. The Google Cloud VM instance performs a bit slower (~ 1.5 min / epoch) than the pool computers (~ 1.2 min / epoch). 
 Switching to a VM with an SSD should improve the calculation.
 
