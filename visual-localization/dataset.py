@@ -9,6 +9,7 @@ import torchvision.transforms as transforms
 
 from utils import read_table, lines
 from preprocessing import Resize, RandomCrop, SubtractMean, ToTensor, Compose
+from transformations import euler_from_quaternion, quaternion_from_euler
 
 class DeepLoc(Dataset):
 
@@ -90,16 +91,17 @@ class PerceptionCarDataset(Dataset):
         ToTensor()
     ])
 
-    def __init__(self, mode, preprocess = default_preprocessing):
+    def __init__(self, mode, preprocess = default_preprocessing, augment = True):
         self.data = []
         self.preprocess = preprocess
+        self.augment = augment
 
         if mode not in ("train", "validation", "test", "visualize"):
             raise ValueError("Invalid mode.")
 
         self.mode = mode
 
-        set_path = "PerceptionCarDataset"
+        set_path = "PerceptionCarDataset2"
         
         origin_path = os.path.join(set_path, "origin.txt")
         for line in lines(origin_path):
@@ -125,16 +127,18 @@ class PerceptionCarDataset(Dataset):
             types = (str, float, float, float, float, float, float),
             delimiter = " "):
                 pose = (x, y, qw, qx, qy, qz)
-                image_path = os.path.join(mode_path, filename)
+                # image_path = os.path.join(mode_path, filename)
+                image_path = os.path.join(set_path, filename)
                 self.data.append((image_path, pose))
         else:
             poses_path = os.path.join(set_path, mode + ".txt")
             for *filenames, x, y, qw, qx, qy, qz in read_table(
                 poses_path,
-                types = (str,str,str,str,str,str, float, float, float, float, float, float),
+                types = (str, str, str, str, str, str, float, float, float, float, float, float),
                 delimiter = " "):
                     pose = (x, y, qw, qx, qy, qz)
                     image_paths = map(lambda fn: os.path.join(set_path, fn), filenames)
+                    #image_paths = filenames
                     self.data.append((*image_paths, pose))
 
         self.size = len(self.data)
@@ -148,8 +152,20 @@ class PerceptionCarDataset(Dataset):
             image = Image.open(image_path)
             if self.preprocess is not None:
                 image = self.preprocess(image)
+            x, y, qw, qx, qy, qz = pose
         else:
+
             *image_paths, pose = self.data[idx]
+            x, y, *q = pose
+            qw, qx, qy, qz = q
+
+            # Randomly switch front three and back three images
+            switch_front_and_back = np.random.choice((True, False)) if self.augment else False
+            if switch_front_and_back:
+                image_paths = image_paths[3:] + image_paths[:3]
+                a1, a2, a3 = euler_from_quaternion(q)
+                a3 = a3 + np.sign(a3) * np.pi # rotate the pose by 180°
+                qw, qx, qy, qz = quaternion_from_euler(a1, a2, a3)
 
             images = map(Image.open, image_paths)
 
@@ -160,7 +176,6 @@ class PerceptionCarDataset(Dataset):
             images = tuple(images)
             image = torch.cat(images, dim = 0)
         
-        x, y, qw, qx, qy, qz = pose
         p = torch.Tensor([x, y, qw, qx, qy, qz])
 
         return (image, p)
