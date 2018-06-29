@@ -15,8 +15,8 @@ from utils import rad2deg
 class PosePlotter:
 
     UTM_zone = (32, "U")
-    lat_max, lng_max = 48.01507, 7.8364
-    lat_min, lng_min = 48.01268, 7.83086
+    lat_max, lng_max = 48.01460, 7.8364
+    lat_min, lng_min = 48.01230, 7.83086
 
     def __init__(self, update_interval = 1, trajectory = False):
         self.update_interval = update_interval
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     plotter.register("GT", "red")
     # plotter.register("x", "blue") # TEST
 
-    data = PerceptionCarDataset("visualize", preprocess = None)
+    data = PerceptionCarDataset("visualize", preprocess = None, augment = False)
 
     for image, pose in data:
         x, y, qw, qx, qy, qz = pose
