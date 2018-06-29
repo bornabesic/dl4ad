@@ -98,7 +98,7 @@ else:
 
 # Prepare the environment
 timestamp = datetime.datetime.now()
-identifier = "model_{}_{}_{}_{}_{}_{}".format(LOSS_BETA, timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute)
+identifier = "{}_{}_{}_{}_{}_{}_{}".format(ARCHITECTURE, LOSS_BETA, timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute)
 
 directory = "models"
 if not os.path.exists(directory):
