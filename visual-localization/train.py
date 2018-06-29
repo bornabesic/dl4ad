@@ -24,15 +24,8 @@ args_parser = argparse.ArgumentParser(
 args_parser.add_argument(
 	"--learning_rate",
 	type = float,
-	help = "SGD learning rate",
+	help = "Optimizer learning rate",
     default = 1e-5
-)
-
-args_parser.add_argument(
-	"--momentum",
-	type = float,
-	help = "SGD momentum",
-    default = 0.5
 )
 
 args_parser.add_argument(
@@ -88,7 +81,6 @@ args = args_parser.parse_args()
 # Parameters
 
 LEARNING_RATE = args.learning_rate
-MOMENTUM = args.momentum
 GAMMA = args.gamma
 LR_DECAY_EPOCHS = args.decay_lr_every
 LOSS_BETA = args.loss_beta
@@ -122,7 +114,6 @@ logger.log("Train set size: {} samples".format(len(train_data)))
 logger.log("Validation set size: {} samples".format(len(valid_data)))
 
 logger.log("Learning rate: {}".format(LEARNING_RATE))
-logger.log("Momentum: {}".format(MOMENTUM))
 logger.log("Beta: {}".format(LOSS_BETA))
 logger.log("Batch size: {}".format(BATCH_SIZE))
 logger.log("Epochs: {}".format(EPOCHS))
@@ -147,7 +138,7 @@ logger.log("Total parameters: {}".format(total_params))
 logger.log("Memory requirement: {:.2f} MiB".format(((total_params * 4) / 1024) / 1024))
 
 # Optimizer
-optimizer = optim.SGD(net.parameters(), lr = LEARNING_RATE, momentum = MOMENTUM)
+optimizer = optim.Adam(net.parameters(), lr = LEARNING_RATE)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = LR_DECAY_EPOCHS, gamma = GAMMA)
 
 # Loss function
