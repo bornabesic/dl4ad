@@ -186,13 +186,13 @@ class PerceptionCarDatasetMerged(Dataset):
         self.datasets = list(map(lambda dp: PerceptionCarDataset(dp, mode, preprocess, augment), dataset_paths))
         self.size = foldr(lambda i, r: len(i) + r, self.datasets, 0)
         
-        ref_origin = self.datasets[0].origin
+        self.origin = self.datasets[0].origin
         '''
         offset = origin - reference
         origin = reference + offset
         '''
         for dataset in self.datasets:
-            dataset.origin_offset = dataset.origin - ref_origin
+            dataset.origin_offset = dataset.origin - self.origin
 
 
     def __getitem__(self, idx):
@@ -203,11 +203,9 @@ class PerceptionCarDatasetMerged(Dataset):
                 x, y, *q = pose
                 x, y, _ = torch.Tensor([x, y, 0]) + dataset.origin_offset
                 pose = (x, y, *q)
-                break
+                return (image, pose)
             except IndexError:
                 idx -= len(dataset)
-
-        return (image, pose)
 
     def __len__(self):
         return self.size

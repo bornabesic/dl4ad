@@ -8,7 +8,7 @@ from cartopy.io.img_tiles import OSM
 import matplotlib.pyplot as plt
 import matplotlib
 import utm
-from dataset import PerceptionCarDataset
+from dataset import PerceptionCarDatasetMerged
 from transformations import euler_from_quaternion
 from utils import rad2deg
 
@@ -135,7 +135,13 @@ if __name__ == "__main__":
     plotter.register("GT", "red")
     # plotter.register("x", "blue") # TEST
 
-    data = PerceptionCarDataset("visualize", preprocess = None, augment = False)
+    data = PerceptionCarDatasetMerged(
+        "PerceptionCarDataset",
+        "PerceptionCarDataset2",
+        mode = "visualize",
+        preprocess = None,
+        augment = False
+    )
 
     for image, pose in data:
         x, y, qw, qx, qy, qz = pose
