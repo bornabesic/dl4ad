@@ -202,7 +202,7 @@ class PerceptionCarDatasetMerged(Dataset):
                 image, pose = item
                 x, y, *q = pose
                 x, y, _ = torch.Tensor([x, y, 0]) + dataset.origin_offset
-                pose = (x, y, *q)
+                pose = torch.Tensor((x, y, *q))
                 return (image, pose)
             except IndexError:
                 idx -= len(dataset)
