@@ -83,3 +83,9 @@ class Logger:
 
     def __exit__(self, type, value, traceback):
         self.close()
+
+def foldr(fold_func, collection, neutral):
+    result = neutral
+    for item in collection:
+        result = fold_func(item, result)
+    return result

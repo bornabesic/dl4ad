@@ -91,7 +91,7 @@ class PerceptionCarDataset(Dataset):
         ToTensor()
     ])
 
-    def __init__(self, mode, preprocess = default_preprocessing, augment = True):
+    def __init__(self, set_path, mode, preprocess = default_preprocessing, augment = True):
         self.data = []
         self.preprocess = preprocess
         self.augment = augment
@@ -100,8 +100,6 @@ class PerceptionCarDataset(Dataset):
             raise ValueError("Invalid mode.")
 
         self.mode = mode
-
-        set_path = "PerceptionCarDataset2"
         
         origin_path = os.path.join(set_path, "origin.txt")
         for line in lines(origin_path):
@@ -127,8 +125,8 @@ class PerceptionCarDataset(Dataset):
             types = (str, float, float, float, float, float, float),
             delimiter = " "):
                 pose = (x, y, qw, qx, qy, qz)
-                # image_path = os.path.join(mode_path, filename)
-                image_path = os.path.join(set_path, filename)
+                image_path = os.path.join(mode_path, filename)
+                # image_path = os.path.join(set_path, filename)
                 self.data.append((image_path, pose))
         else:
             poses_path = os.path.join(set_path, mode + ".txt")
@@ -179,6 +177,42 @@ class PerceptionCarDataset(Dataset):
         p = torch.Tensor([x, y, qw, qx, qy, qz])
 
         return (image, p)
+
+from utils import foldr
+
+class PerceptionCarDatasetMerged(Dataset):
+
+    def __init__(self, *dataset_paths, mode, preprocess = PerceptionCarDataset.default_preprocessing, augment = True):
+        self.datasets = list(map(lambda dp: PerceptionCarDataset(dp, mode, preprocess, augment), dataset_paths))
+        self.size = foldr(lambda i, r: len(i) + r, self.datasets, 0)
+        
+        ref_origin = self.datasets[0].origin
+        '''
+        offset = origin - reference
+        origin = reference + offset
+        '''
+        for dataset in self.datasets:
+            dataset.origin_offset = dataset.origin - ref_origin
+
+
+    def __getitem__(self, idx):
+        for dataset in self.datasets:
+            try:
+                item = dataset[idx]
+                image, pose = item
+                x, y, *q = pose
+                x, y, _ = torch.Tensor([x, y, 0]) + dataset.origin_offset
+                pose = (x, y, *q)
+                break
+            except IndexError:
+                idx -= len(dataset)
+
+        return (image, pose)
+
+    def __len__(self):
+        return self.size
+            
+
 
 # def make_train_valid_loader(data, valid_percentage, batch_size = 4, num_workers = 1, pin_memory = True):
 #     num_samples = len(data)

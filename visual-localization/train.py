@@ -10,7 +10,7 @@ import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
 
-from dataset import DeepLocAugmented, make_loader, evaluate_median, PerceptionCarDataset
+from dataset import DeepLocAugmented, make_loader, evaluate_median, PerceptionCarDataset, PerceptionCarDatasetMerged
 import network
 from network import parameters, PoseNetSimple
 from customized_loss import Customized_Loss
@@ -108,8 +108,19 @@ model_path = "{}/{}".format(directory, identifier)
 logger = Logger("{}/{}.log.txt".format(directory, identifier), print_to_stdout = True)
 
 # Load the dataset
-train_data = PerceptionCarDataset("train")
-valid_data = PerceptionCarDataset("validation", preprocess = PerceptionCarDataset.valid_preprocessing)
+train_data = PerceptionCarDatasetMerged(
+    "PerceptionCarDataset",
+    "PerceptionCarDataset2",
+    mode = "train"
+)
+valid_data = PerceptionCarDatasetMerged(
+    "PerceptionCarDataset",
+    "PerceptionCarDataset2",
+    mode = "validation",
+    preprocess = PerceptionCarDataset.valid_preprocessing,
+    augment = False
+)
+
 logger.log("Train set size: {} samples".format(len(train_data)))
 logger.log("Validation set size: {} samples".format(len(valid_data)))
 
