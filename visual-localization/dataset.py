@@ -10,6 +10,7 @@ import torchvision.transforms as transforms
 from utils import read_table, lines
 from preprocessing import Resize, RandomCrop, SubtractMean, ToTensor, Compose
 from transformations import euler_from_quaternion, quaternion_from_euler
+from augmentation import augmentations
 
 class DeepLoc(Dataset):
 
@@ -167,6 +168,13 @@ class PerceptionCarDataset(Dataset):
 
             images = map(Image.open, image_paths)
 
+
+            # Randomly augment the six images with one effect online
+            should_augment = np.random.choice((True, False)) if self.augment else False
+            if should_augment:
+                x = round(np.random.uniform(len(augmentations))) - 1
+                images = map(augmentations[x],images)
+
             if self.preprocess is not None:
                 images = map(self.preprocess, images)
 
@@ -202,7 +210,7 @@ class PerceptionCarDatasetMerged(Dataset):
                 image, pose = item
                 x, y, *q = pose
                 x, y, _ = torch.Tensor([x, y, 0]) + dataset.origin_offset
-                pose = (x, y, *q)
+                pose = torch.Tensor((x, y, *q))
                 return (image, pose)
             except IndexError:
                 idx -= len(dataset)

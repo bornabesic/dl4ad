@@ -7,7 +7,6 @@ import numpy as np
 import os
 
 from preprocessing import ToRGB
-from dataset import make_train_valid_generator
 
 # Identity transformation
 # (Returns the original image)
@@ -136,6 +135,22 @@ class RegionDropout:
         image = Image.fromarray(np.uint8(image_array))
         return image
 
+
+# Define the augmentations
+augmentations = [
+    Identity(),
+    ChangeBrightness(0.5),
+    ChangeBrightness(2),
+    ChangeContrast(0.5),
+    ChangeContrast(2),
+    GaussianBlur(2),
+    GaussianBlur(3),
+    GaussianNoise(0, 10),
+    SaltAndPepperNoise(0.1),
+    RegionDropout(0.01, 10),
+]
+
+
 if __name__ == "__main__":
     from dataset import DeepLoc
 
@@ -156,20 +171,6 @@ if __name__ == "__main__":
     os.makedirs(train_path, exist_ok = True)
     os.makedirs(valid_path, exist_ok = True)
     os.makedirs(test_path, exist_ok = True)
-
-    # Define the augmentations
-    augmentations = [
-        Identity(),
-        ChangeBrightness(0.5),
-        ChangeBrightness(2),
-        ChangeContrast(0.5),
-        ChangeContrast(2),
-        GaussianBlur(2),
-        GaussianBlur(3),
-        GaussianNoise(0, 10),
-        SaltAndPepperNoise(0.1),
-        RegionDropout(0.01, 10),
-    ]
 
     # Iterate the train data
     i = 0
