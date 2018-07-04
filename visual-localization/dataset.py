@@ -182,6 +182,9 @@ class PerceptionCarDataset(Dataset):
             images = tuple(images)
             image = torch.cat(images, dim = 0)
         
+        # Hardcoded normalization to [-1,1]. Max. area from dataset is 350m x 350m
+        x = x / 350
+        y = y / 350
         p = torch.Tensor([x, y, qw, qx, qy, qz])
 
         return (image, p)

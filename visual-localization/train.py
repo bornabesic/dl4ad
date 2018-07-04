@@ -186,7 +186,9 @@ for epoch in range(EPOCHS):
         losses = tuple(map(lambda ps_out: criterion(ps_out, ps), ps_outs))
 
         total_loss += losses[-1].item() # Important to use .item() !
+        last_training_loss =  losses[-1].item()
         num_iters += 1
+        print("Loss of last training batch: {}".format(last_training_loss))
 
         # Do a backpropagation step
         optimizer.zero_grad()
@@ -209,6 +211,7 @@ for epoch in range(EPOCHS):
 
     # Save the average epoch loss
     avg_loss = total_loss / num_iters
+    logger.log("Loss of last training batch: {}".format(last_training_loss))
     logger.log("Average training loss: {}".format(avg_loss))
 
     # Evaluate on the validation set
@@ -217,6 +220,7 @@ for epoch in range(EPOCHS):
     # logger.log("Average validation loss: {}".format(avg_loss_valid))
     x_error_median, q_error_median, loss_median = evaluate_median(net, criterion, valid_loader, device)
     y_loss_valid.append(loss_median)
+    y_training.append(last_training_loss)
     logger.log("Median validation error: {:.2f} m, {:.2f} °".format(x_error_median, q_error_median))
     logger.log("Median validation loss: {}".format(loss_median))
 
@@ -224,6 +228,7 @@ for epoch in range(EPOCHS):
     loss_fig = plt.figure()
     loss_ax = loss_fig.gca()
     loss_ax.plot(x, y_loss_valid, "r", label = "Validation")
+    loss_ax.plot(x, y_training, "b", label = "Training")
     plt.xlabel("Epoch")
     plt.ylabel("Median loss")
     loss_ax.grid(True)
