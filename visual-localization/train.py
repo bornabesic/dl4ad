@@ -184,7 +184,6 @@ for epoch in range(EPOCHS):
         losses = tuple(map(lambda ps_out: criterion(ps_out, ps), ps_outs))
 
         loss = losses[-1].item()
-        print(loss)
         training_losses.append(loss) # Important to use .item() !
         num_iters += 1
 
