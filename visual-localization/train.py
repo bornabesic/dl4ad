@@ -9,7 +9,7 @@ import torch.optim as optim
 import matplotlib as mpl
 mpl.use("Agg")
 import matplotlib.pyplot as plt
-
+import numpy as np
 from dataset import DeepLocAugmented, make_loader, evaluate_median, PerceptionCarDataset, PerceptionCarDatasetMerged
 import network
 from network import parameters, PoseNetSimple
@@ -190,7 +190,6 @@ for epoch in range(EPOCHS):
         last_training_loss =  losses[-1].item()
         training_loss.append(last_training_loss)
         num_iters += 1
-        print("Loss of last training batch: {}".format(last_training_loss))
 
         # Do a backpropagation step
         optimizer.zero_grad()

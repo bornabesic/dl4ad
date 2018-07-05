@@ -160,20 +160,20 @@ class PerceptionCarDataset(Dataset):
 
             # Randomly switch front three and back three images
             switch_front_and_back = np.random.choice((True, False)) if self.augment else False
-            if switch_front_and_back:
-                image_paths = image_paths[3:] + image_paths[:3]
-                a1, a2, a3 = euler_from_quaternion(q)
-                a3 = a3 + np.sign(a3) * np.pi # rotate the pose by 180°
-                qw, qx, qy, qz = quaternion_from_euler(a1, a2, a3)
+#            if switch_front_and_back:
+#                image_paths = image_paths[3:] + image_paths[:3]
+#                a1, a2, a3 = euler_from_quaternion(q)
+#                a3 = a3 + np.sign(a3) * np.pi # rotate the pose by 180°
+#                qw, qx, qy, qz = quaternion_from_euler(a1, a2, a3)
 
             images = map(Image.open, image_paths)
 
 
-            # Randomly augment the six images with one effect online
-            should_augment = np.random.choice((True, False)) if self.augment else False
-            if should_augment:
-                x = round(np.random.uniform(len(augmentations))) - 1
-                images = map(augmentations[x],images)
+#            # Randomly augment the six images with one effect online
+ #           should_augment = np.random.choice((True, False)) if self.augment else False
+ #           if should_augment:
+ #               x = round(np.random.uniform(len(augmentations))) - 1
+ #               images = map(augmentations[x],images)
 
             if self.preprocess is not None:
                 images = map(self.preprocess, images)
@@ -183,7 +183,11 @@ class PerceptionCarDataset(Dataset):
             image = torch.cat(images, dim = 0)
         
         # Hardcoded normalization to [-1,1]. Max. area from dataset is 350m x 350m
+   #     print("X vor teiler")
+  #      print(x)
         x = x / 350
+ #       print("X nach teiler")
+#        print(x)
         y = y / 350
         p = torch.Tensor([x, y, qw, qx, qy, qz])
 
@@ -203,7 +207,7 @@ class PerceptionCarDatasetMerged(Dataset):
         origin = reference + offset
         '''
         for dataset in self.datasets:
-            dataset.origin_offset = dataset.origin - self.origin
+            dataset.origin_offset = (dataset.origin - self.origin) / 350 #with hardcoded normalization
 
 
     def __getitem__(self, idx):
@@ -308,7 +312,9 @@ def evaluate_median(model, criterion, loader, device): # Expects a loader with b
         q = p[:, 2:].cpu().detach().numpy()
         x_out = p_out[:, :2].cpu().detach().numpy()
         q_out = p_out[:, 2:].cpu().detach().numpy()
-        
+        x = x *350
+        x_out = x_out *350
+
         error_x, theta = meters_and_degrees_error(x, q, x_out, q_out)
 
         x_errors.append(error_x)
