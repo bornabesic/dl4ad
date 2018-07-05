@@ -213,7 +213,7 @@ for epoch in range(EPOCHS):
     x_error_median, q_error_median, med_valid_loss = evaluate_median(net, criterion, valid_loader, device)
     # y_loss_valid.append(loss_median)
     # y_training.append(np.median(training_loss))
-    net.log("Median validation error: {:.2f} m, {:.2f} °".format(350 * x_error_median, q_error_median))
+    net.log("Median validation error: {:.2f} m, {:.2f} °".format(x_error_median, q_error_median))
     net.log("Median validation loss: {}".format(med_valid_loss))
 
     # Print some stats

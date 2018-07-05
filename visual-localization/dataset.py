@@ -7,7 +7,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 from PIL import Image
 import torchvision.transforms as transforms
 
-from utils import read_table, lines
+from utils import read_table, lines, rad2deg
 from preprocessing import Resize, RandomCrop, SubtractMean, ToTensor, Compose
 from transformations import euler_from_quaternion, quaternion_from_euler
 from augmentation import augmentations
@@ -294,7 +294,7 @@ def make_loader(data, batch_size = 4, shuffle = True, num_workers = 0, pin_memor
 def evaluate_median(model, criterion, loader, device): # Expects a loader with batch_size = 1
     model.eval()
     x_errors = []
-    q_errors = []
+    theta_errors = []
     losses = []
 
     for image, p in loader:
@@ -310,25 +310,25 @@ def evaluate_median(model, criterion, loader, device): # Expects a loader with b
         losses.append(loss_out.item())
 
         x = p[:, :2].cpu().detach().numpy()
-        q = p[:, 2:].cpu().detach().numpy()
+        theta = p[:, 2:].cpu().detach().numpy()
         x_out = p_out[:, :2].cpu().detach().numpy()
-        q_out = p_out[:, 2:].cpu().detach().numpy()
+        theta_out = p_out[:, 2:].cpu().detach().numpy()
 
-        error_x, theta = meters_and_degrees_error(x, q, x_out, q_out)
+        error_x, error_theta = meters_and_degrees_error(x, theta, x_out, theta_out)
 
         x_errors.append(error_x)
-        q_errors.append(theta)
+        theta_errors.append(error_theta)
 
     x_error_median = np.median(x_errors)
-    q_error_median = np.median(q_errors)
+    theta_error_median = np.median(theta_errors)
     loss_median = np.median(losses)
-    return x_error_median, q_error_median, loss_median
+    return 350 * x_error_median, theta_error_median, loss_median
 
-def meters_and_degrees_error(x, q, x_predicted, q_predicted):
+def meters_and_degrees_error(xy, theta, xy_predicted, theta_predicted):
     # q1 = q / np.linalg.norm(q)
     # q2 = q_predicted / np.linalg.norm(q_predicted)
     # d = np.abs(np.sum(np.multiply(q1, q2)))
     # orientation_error = 2 * np.arccos(d) * 180 / np.pi
-    orientation_error = np.abs(q - q_predicted)
-    position_error = np.linalg.norm(x - x_predicted)
+    orientation_error = rad2deg(np.abs(theta - theta_predicted))
+    position_error = np.linalg.norm(xy - xy_predicted)
     return position_error, orientation_error
