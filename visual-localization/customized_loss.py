@@ -9,14 +9,10 @@ class Customized_Loss(nn.Module):
         self.beta = beta
 
     def forward(self, output, target):
-        Pos = target[:, :2]
+        Pos = target[:, :2] * 350
         #Hardcoded re-normalization
-        Pos[0] = Pos[0] * 350
-        Pos[1] = Pos[1] * 350
         Quat = target[:, 2:]
-        Pos_est = output[:,:2]
-        Pos_est[0] = Pos_est[0] * 350
-        Pos_est[1] = Pos_est[1] * 350
+        Pos_est = output[:,:2] * 350
         Quat_est = output[:,2:]
         Quat_est_normalized = F.normalize(Quat_est)
         Pos_error = torch.norm(Pos_est - Pos, 2, dim = 1)
