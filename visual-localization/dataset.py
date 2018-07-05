@@ -125,7 +125,8 @@ class PerceptionCarDataset(Dataset):
             poses_path,
             types = (str, float, float, float, float, float, float),
             delimiter = " "):
-                pose = (x, y, qw, qx, qy, qz)
+                _, _, theta = euler_from_quaternion((qw, qx, qy, qz))
+                pose = (x, y, theta)
                 image_path = os.path.join(mode_path, filename)
                 # image_path = os.path.join(set_path, filename)
                 self.data.append((image_path, pose))
@@ -135,7 +136,8 @@ class PerceptionCarDataset(Dataset):
                 poses_path,
                 types = (str, str, str, str, str, str, float, float, float, float, float, float),
                 delimiter = " "):
-                    pose = (x, y, qw, qx, qy, qz)
+                    _, _, theta = euler_from_quaternion((qw, qx, qy, qz))
+                    pose = (x, y, theta)
                     image_paths = map(lambda fn: os.path.join(set_path, fn), filenames)
                     #image_paths = filenames
                     self.data.append((*image_paths, pose))
@@ -151,12 +153,11 @@ class PerceptionCarDataset(Dataset):
             image = Image.open(image_path)
             if self.preprocess is not None:
                 image = self.preprocess(image)
-            x, y, qw, qx, qy, qz = pose
+            x, y, theta = pose
         else:
 
             *image_paths, pose = self.data[idx]
-            x, y, *q = pose
-            qw, qx, qy, qz = q
+            x, y, theta = pose
 
             # Randomly switch front three and back three images
             switch_front_and_back = np.random.choice((True, False)) if self.augment else False
@@ -189,7 +190,7 @@ class PerceptionCarDataset(Dataset):
  #       print("X nach teiler")
 #        print(x)
         y = y / 350
-        p = torch.Tensor([x, y, qw, qx, qy, qz])
+        p = torch.Tensor([x, y, theta])
 
         return (image, p)
 
@@ -312,8 +313,6 @@ def evaluate_median(model, criterion, loader, device): # Expects a loader with b
         q = p[:, 2:].cpu().detach().numpy()
         x_out = p_out[:, :2].cpu().detach().numpy()
         q_out = p_out[:, 2:].cpu().detach().numpy()
-        x = x *350
-        x_out = x_out *350
 
         error_x, theta = meters_and_degrees_error(x, q, x_out, q_out)
 
@@ -326,9 +325,10 @@ def evaluate_median(model, criterion, loader, device): # Expects a loader with b
     return x_error_median, q_error_median, loss_median
 
 def meters_and_degrees_error(x, q, x_predicted, q_predicted):
-    q1 = q / np.linalg.norm(q)
-    q2 = q_predicted / np.linalg.norm(q_predicted)
-    d = np.abs(np.sum(np.multiply(q1, q2)))
-    orientation_error = 2 * np.arccos(d) * 180 / np.pi
+    # q1 = q / np.linalg.norm(q)
+    # q2 = q_predicted / np.linalg.norm(q_predicted)
+    # d = np.abs(np.sum(np.multiply(q1, q2)))
+    # orientation_error = 2 * np.arccos(d) * 180 / np.pi
+    orientation_error = np.abs(q - q_predicted)
     position_error = np.linalg.norm(x - x_predicted)
     return position_error, orientation_error

@@ -1,5 +1,12 @@
+import os
+import json
+import datetime
 import torch
 import torch.nn as nn
+from utils import Logger
+
+import sys
+this = sys.modules[__name__]
 
 from modules import Flatten, Inception
 
@@ -16,13 +23,93 @@ def xavier_initialization(module):
     except AttributeError:
         pass
 
+def get_model_class(model_name):
+    return getattr(this, model_name)    
+
+class NeuralNetworkModel(nn.Module):
+
+    directory = "models"
+
+    def __init__(self, architecture, **kwargs):
+        super(NeuralNetworkModel, self).__init__()
+        
+        self.architecture = architecture
+        self.kwargs = kwargs
+
+        # Identifier
+        timestamp = datetime.datetime.now()
+        self.identifier = "{}_{}_{}_{}_{}_{}".format(architecture, timestamp.year, timestamp.month, timestamp.day, timestamp.hour, timestamp.minute)
+
+        # File paths
+        base_path = os.path.join(NeuralNetworkModel.directory, self.identifier)
+        self.model_path = base_path + ".pth"
+        self.json_path = base_path + ".json"
+
+        # Logger
+        self.logger = Logger(base_path + ".log", print_to_stdout = True)
+
+        # State
+        self.train_losses = list()
+        self.valid_losses = list()
+
+    def update_loss(self, train_loss, valid_loss):
+        self.train_losses.append(train_loss)
+        self.valid_losses.append(valid_loss)
+
+    def save(self):
+        os.makedirs(NeuralNetworkModel.directory, exist_ok = True)
+        with open(self.json_path, "wt") as json_file:
+            json.dump(
+                {
+                    "architecture": self.architecture,
+                    "train_losses": self.train_losses,
+                    "valid_losses": self.valid_losses,
+                    "model_path": self.model_path,
+                    **self.kwargs
+                },
+                json_file
+            )
+
+        torch.save(self.state_dict(), self.model_path)
+        self.log("Model parameters saved to {}.".format(self.model_path))
+
+    def log(self, text):
+        self.logger.log(text)
+
+    def close(self):
+        self.logger.close()
+
+    @staticmethod
+    def load(json_path):
+        with open(json_path, "rt") as json_file:
+            params = json.load(json_file)
+
+        architecture = params["architecture"]
+        model_path = params["model_path"]
+        train_losses = params["train_losses"]
+        valid_losses = params["valid_losses"]
+
+        del params["architecture"]
+        del params["model_path"]
+        del params["train_losses"]
+        del params["valid_losses"]
+
+        arch_class = get_model_class(architecture)
+        net = arch_class(**params)
+        net.load_state_dict(torch.load(model_path))
+        net.train_losses = train_losses
+        net.valid_losses = valid_losses
+
+        return net
+
+
 # Modified implementation originally taken from:
 # https://github.com/kuangliu/pytorch-cifar/blob/master/models/googlenet.py
 
-class PoseNet(nn.Module):
+class PoseNet(NeuralNetworkModel):
 
-    def __init__(self):
-        super(PoseNet, self).__init__()
+    def __init__(self, **kwargs):
+        super(PoseNet, self).__init__("PoseNet", **kwargs)
 
         # Stem network
         self.stem_network = nn.Sequential(
@@ -44,7 +131,7 @@ class PoseNet(nn.Module):
             nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
             nn.ReLU(True),
             nn.Dropout(p = 0.7),
-            nn.Linear(1024, 6)
+            nn.Linear(1024, 3)
         )
 
         self.side_network_4d = nn.Sequential(
@@ -55,7 +142,7 @@ class PoseNet(nn.Module):
             nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
             nn.ReLU(True),
             nn.Dropout(p = 0.7),
-            nn.Linear(1024, 6)
+            nn.Linear(1024, 3)
         )
 
         # Inceptions 3
@@ -137,7 +224,7 @@ class PoseNet(nn.Module):
         self.final_regressor = nn.Sequential(
             nn.Linear(1024, 2048),
             nn.ReLU(True),
-            nn.Linear(2048, 6)
+            nn.Linear(2048, 3)
         )
 
         self.apply(xavier_initialization)
@@ -172,10 +259,10 @@ class PoseNet(nn.Module):
         out3 = self.final_regressor(out)
         return (out1, out2, out3)
 
-class PoseNetSimple(nn.Module):
+class PoseNetSimple(NeuralNetworkModel):
 
-    def __init__(self):
-        super(PoseNetSimple, self).__init__()
+    def __init__(self, **kwargs):
+        super(PoseNetSimple, self).__init__("PoseNetSimple", **kwargs)
 
         # Stem network
         self.stem_network = nn.Sequential(
@@ -197,7 +284,7 @@ class PoseNetSimple(nn.Module):
             nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
             nn.ReLU(True),
             nn.Dropout(p = 0.5),
-            nn.Linear(1024, 6)
+            nn.Linear(1024, 3)
         )
 
         # Inceptions 3

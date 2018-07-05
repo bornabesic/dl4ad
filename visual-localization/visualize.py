@@ -144,12 +144,13 @@ if __name__ == "__main__":
     )
 
     for image, pose in data:
-        x, y, qw, qx, qy, qz = pose
+        x, y, theta = pose
+        x = x * 350
+        y = y * 350
         # Global pose
         x, y, _ = torch.Tensor([x, y, 0]) + data.origin
         lat, lng = PosePlotter.utm2latlng(x, y)
-        _, _, theta = euler_from_quaternion([qw, qx, qy, qz])
-        azimuth = rad2deg(-theta)
+        azimuth = rad2deg(-theta.item())
         print(lat, lng, azimuth)
         plotter.update("GT", x, y, theta)
         plotter.draw()
