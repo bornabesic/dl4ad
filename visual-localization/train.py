@@ -159,6 +159,7 @@ criterion = Customized_Loss(beta = LOSS_BETA)
 x = []
 y_training = []
 y_loss_valid = []
+training_loss = []
 
 # Time measuring
 stopwatch_train = Stopwatch()
@@ -187,6 +188,7 @@ for epoch in range(EPOCHS):
 
         total_loss += losses[-1].item() # Important to use .item() !
         last_training_loss =  losses[-1].item()
+        training_loss.append(last_training_loss)
         num_iters += 1
         print("Loss of last training batch: {}".format(last_training_loss))
 
@@ -211,7 +213,7 @@ for epoch in range(EPOCHS):
 
     # Save the average epoch loss
     avg_loss = total_loss / num_iters
-    logger.log("Loss of last training batch: {}".format(last_training_loss))
+    logger.log("Median training loss: {}".format(np.median(training_loss)))
     logger.log("Average training loss: {}".format(avg_loss))
 
     # Evaluate on the validation set
@@ -220,7 +222,7 @@ for epoch in range(EPOCHS):
     # logger.log("Average validation loss: {}".format(avg_loss_valid))
     x_error_median, q_error_median, loss_median = evaluate_median(net, criterion, valid_loader, device)
     y_loss_valid.append(loss_median)
-    y_training.append(last_training_loss)
+    y_training.append(np.median(training_loss))
     logger.log("Median validation error: {:.2f} m, {:.2f} °".format(x_error_median, q_error_median))
     logger.log("Median validation loss: {}".format(loss_median))
 
