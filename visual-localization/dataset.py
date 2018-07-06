@@ -103,18 +103,18 @@ class PerceptionCarDataset(Dataset):
     def normalize(x, y, theta): # Expects global UTM coordinates
         # This makes x and y independent of the origin
         x -=  PerceptionCarDataset.normalize_mu_x
-        x /= PerceptionCarDataset.normalize_sigma_x
+        # x /= PerceptionCarDataset.normalize_sigma_x
 
         y -=PerceptionCarDataset.normalize_mu_y
-        y /= PerceptionCarDataset.normalize_sigma_y
+        # y /= PerceptionCarDataset.normalize_sigma_y
         return x, y, theta
 
     @staticmethod
     def unnormalize(x, y, theta):
-        x *= PerceptionCarDataset.normalize_sigma_x
+        # x *= PerceptionCarDataset.normalize_sigma_x
         x += PerceptionCarDataset.normalize_mu_x
 
-        y *= PerceptionCarDataset.normalize_sigma_y
+        # y *= PerceptionCarDataset.normalize_sigma_y
         y += PerceptionCarDataset.normalize_mu_y
 
         return x, y, theta
@@ -128,7 +128,7 @@ class PerceptionCarDataset(Dataset):
             raise ValueError("Invalid mode.")
 
         self.mode = mode
-        
+
         origin_path = os.path.join(set_path, "origin.txt")
         for line in lines(origin_path):
           self.origin = torch.Tensor(tuple(map(float, line.split(" "))))
