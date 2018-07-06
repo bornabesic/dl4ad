@@ -92,6 +92,33 @@ class PerceptionCarDataset(Dataset):
         ToTensor()
     ])
 
+    # Mean UTM coordinates
+    normalize_mu_x = 413025.2
+    normalize_mu_y = 5318442
+    # Standard deviations in meters
+    normalize_sigma_x = 300
+    normalize_sigma_y = 300
+
+    @staticmethod
+    def normalize(x, y, theta): # Expects global UTM coordinates
+        # This makes x and y independent of the origin
+        x -=  PerceptionCarDataset.normalize_mu_x
+        x /= PerceptionCarDataset.normalize_sigma_x
+
+        y -=PerceptionCarDataset.normalize_mu_y
+        y /= PerceptionCarDataset.normalize_sigma_y
+        return x, y, theta
+
+    @staticmethod
+    def unnormalize(x, y, theta):
+        x *= PerceptionCarDataset.normalize_sigma_x
+        x += PerceptionCarDataset.normalize_mu_x
+
+        y *= PerceptionCarDataset.normalize_sigma_y
+        y += PerceptionCarDataset.normalize_mu_y
+
+        return x, y, theta
+
     def __init__(self, set_path, mode, preprocess = default_preprocessing, augment = True):
         self.data = []
         self.preprocess = preprocess
@@ -126,6 +153,13 @@ class PerceptionCarDataset(Dataset):
             types = (str, float, float, float, float, float, float),
             delimiter = " "):
                 _, _, theta = euler_from_quaternion((qw, qx, qy, qz))
+
+                ''' Normalization '''
+                # This makes x and y independent of the origin
+                x, y, _ = torch.Tensor([x, y, 0]) + self.origin
+                x, y, theta = PerceptionCarDataset.normalize(x, y, theta)
+                ''''''
+
                 pose = (x, y, theta)
                 image_path = os.path.join(mode_path, filename)
                 # image_path = os.path.join(set_path, filename)
@@ -137,6 +171,13 @@ class PerceptionCarDataset(Dataset):
                 types = (str, str, str, str, str, str, float, float, float, float, float, float),
                 delimiter = " "):
                     _, _, theta = euler_from_quaternion((qw, qx, qy, qz))
+                    
+                    ''' Normalization '''
+                    # This makes x and y independent of the origin
+                    x, y, _ = torch.Tensor([x, y, 0]) + self.origin
+                    x, y, theta = PerceptionCarDataset.normalize(x, y, theta)
+                    ''''''
+
                     pose = (x, y, theta)
                     image_paths = map(lambda fn: os.path.join(set_path, fn), filenames)
                     #image_paths = filenames
@@ -183,13 +224,6 @@ class PerceptionCarDataset(Dataset):
             images = tuple(images)
             image = torch.cat(images, dim = 0)
         
-        # Hardcoded normalization to [-1,1]. Max. area from dataset is 350m x 350m
-   #     print("X vor teiler")
-  #      print(x)
-        x = x / 350
- #       print("X nach teiler")
-#        print(x)
-        y = y / 350
         p = torch.Tensor([x, y, theta])
 
         return (image, p)
@@ -202,26 +236,27 @@ class PerceptionCarDatasetMerged(Dataset):
         self.datasets = list(map(lambda dp: PerceptionCarDataset(dp, mode, preprocess, augment), dataset_paths))
         self.size = foldr(lambda i, r: len(i) + r, self.datasets, 0)
         
-        self.origin = self.datasets[0].origin
-        '''
-        offset = origin - reference
-        origin = reference + offset
-        '''
-        for dataset in self.datasets:
-            dataset.origin_offset = (dataset.origin - self.origin) / 350 #with hardcoded normalization
+        # self.origin = self.datasets[0].origin
+        # '''
+        # offset = origin - reference
+        # origin = reference + offset
+        # '''
+        # for dataset in self.datasets:
+        #     dataset.origin_offset = (dataset.origin - self.origin) / 350 #with hardcoded normalization
 
 
     def __getitem__(self, idx):
         for dataset in self.datasets:
-            try:
-                item = dataset[idx]
-                image, pose = item
-                x, y, *q = pose
-                x, y, _ = torch.Tensor([x, y, 0]) + dataset.origin_offset
-                pose = torch.Tensor((x, y, *q))
-                return (image, pose)
-            except IndexError:
+            if idx >= len(dataset):
                 idx -= len(dataset)
+                continue
+                
+            item = dataset[idx]
+            image, pose = item
+            # x, y, *q = pose
+            # x, y, _ = torch.Tensor([x, y, 0]) + dataset.origin_offset
+            # pose = torch.Tensor(pose)
+            return (image, pose)
 
     def __len__(self):
         return self.size
@@ -300,19 +335,21 @@ def evaluate_median(model, criterion, loader, device): # Expects a loader with b
     for image, p in loader:
         image = image.to(device = device)
         p_outs = model(image)
-        p_out = p_outs[-1].expand(1, -1)
+        p_out = p_outs[-1]
         p_out = p_out.to(device = device)
 
-        p = p.expand(1, -1)
         p = p.to(device = device)
 
         loss_out = criterion(p_out, p)
         losses.append(loss_out.item())
 
-        x = p[:, :2].cpu().detach().numpy()
-        theta = p[:, 2:].cpu().detach().numpy()
-        x_out = p_out[:, :2].cpu().detach().numpy()
-        theta_out = p_out[:, 2:].cpu().detach().numpy()
+        x, y = p[0, :2].cpu().detach().numpy()
+        theta = p[0, 2].cpu().detach().numpy()
+        x, y, theta = PerceptionCarDataset.unnormalize(x, y, theta)
+
+        x_out, y_out = p_out[0, :2].cpu().detach().numpy()
+        theta_out = p_out[0, 2].cpu().detach().numpy()
+        x_out, y_out, theta_out = PerceptionCarDataset.unnormalize(x_out, y_out, theta_out)
 
         error_x, error_theta = meters_and_degrees_error(x, theta, x_out, theta_out)
 
@@ -322,13 +359,18 @@ def evaluate_median(model, criterion, loader, device): # Expects a loader with b
     x_error_median = np.median(x_errors)
     theta_error_median = np.median(theta_errors)
     loss_median = np.median(losses)
-    return 350 * x_error_median, theta_error_median, loss_median
+    return x_error_median, theta_error_median, loss_median
 
 def meters_and_degrees_error(xy, theta, xy_predicted, theta_predicted):
     # q1 = q / np.linalg.norm(q)
     # q2 = q_predicted / np.linalg.norm(q_predicted)
     # d = np.abs(np.sum(np.multiply(q1, q2)))
     # orientation_error = 2 * np.arccos(d) * 180 / np.pi
-    orientation_error = rad2deg(np.abs(theta - theta_predicted))
+
+    sine = np.sin(theta_predicted)
+    cosine = np.cos(theta_predicted)
+    theta_predicted = np.arctan2(sine, cosine)
+    diff = np.abs(theta - theta_predicted)
+    orientation_error = rad2deg(min(np.pi - diff, diff))
     position_error = np.linalg.norm(xy - xy_predicted)
     return position_error, orientation_error

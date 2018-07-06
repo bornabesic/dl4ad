@@ -89,14 +89,12 @@ if VISUALIZE:
 		
 		ps_outs = net(images)
 		# Prediction
-		x_pred, y_pred, theta_pred = p_out = ps_outs[-1].view(-1).cpu().detach().numpy()
-		x_pred, y_pred = x_pred * 350, y_pred * 350
-		x_pred, y_pred, _ = np.array([x_pred, y_pred, 0]) + data.origin
+		x_pred, y_pred, theta_pred = ps_outs[-1].view(-1).cpu().detach().numpy()
+		x_pred, y_pred, theta_pred = PerceptionCarDataset.unnormalize(x_pred, y_pred, theta_pred)
 		lat_pred, lng_pred = PosePlotter.utm2latlng(x_pred, y_pred)
 		# Ground truth
 		x, y, theta = ps.view(-1).cpu().numpy()
-		x, y = x * 350, y * 350
-		x, y, _ = np.array([x, y, 0]) + data.origin
+		x, y, theta = PerceptionCarDataset.unnormalize(x, y, theta)
 		lat, lng = PosePlotter.utm2latlng(x, y)
 		# Visualize on the map
 		plotter.update("Ground truth", x, y, theta)

@@ -8,7 +8,7 @@ from cartopy.io.img_tiles import OSM
 import matplotlib.pyplot as plt
 import matplotlib
 import utm
-from dataset import PerceptionCarDatasetMerged
+from dataset import PerceptionCarDataset, PerceptionCarDatasetMerged
 from transformations import euler_from_quaternion
 from utils import rad2deg
 
@@ -144,11 +144,7 @@ if __name__ == "__main__":
     )
 
     for image, pose in data:
-        x, y, theta = pose
-        x = x * 350
-        y = y * 350
-        # Global pose
-        x, y, _ = torch.Tensor([x, y, 0]) + data.origin
+        x, y, theta = PerceptionCarDataset.unnormalize(*pose)
         lat, lng = PosePlotter.utm2latlng(x, y)
         azimuth = rad2deg(-theta.item())
         print(lat, lng, azimuth)
