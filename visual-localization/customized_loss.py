@@ -30,5 +30,5 @@ class Customized_Loss(nn.Module):
         # theta_errors, _ = torch.min(theta_errors_both, dim = 1)
 
         # total_error = self.beta * torch.mean(xy_errors) + torch.mean(theta_errors)
-        total_error = self.beta * torch.mean(xy_errors) + torch.mean(cosines_errors) + torch.mean(sines_errors)
+        total_error = torch.mean(xy_errors) + self.beta * (torch.mean(cosines_errors) + torch.mean(sines_errors))
         return total_error
