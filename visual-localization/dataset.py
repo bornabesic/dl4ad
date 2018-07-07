@@ -153,6 +153,7 @@ class PerceptionCarDataset(Dataset):
             types = (str, float, float, float, float, float, float),
             delimiter = " "):
                 _, _, theta = euler_from_quaternion((qw, qx, qy, qz))
+                assert theta >= -np.pi and theta <= np.pi 
 
                 ''' Normalization '''
                 # This makes x and y independent of the origin
@@ -171,6 +172,7 @@ class PerceptionCarDataset(Dataset):
                 types = (str, str, str, str, str, str, float, float, float, float, float, float),
                 delimiter = " "):
                     _, _, theta = euler_from_quaternion((qw, qx, qy, qz))
+                    assert theta >= -np.pi and theta <= np.pi
                     
                     ''' Normalization '''
                     # This makes x and y independent of the origin

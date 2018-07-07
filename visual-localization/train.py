@@ -180,7 +180,6 @@ for epoch in range(EPOCHS):
 
         # Predict the pose
         ps_outs = net(images)
-
         losses = tuple(map(lambda ps_out: criterion(ps_out, ps), ps_outs))
 
         loss = losses[-1].item()
@@ -198,7 +197,6 @@ for epoch in range(EPOCHS):
             print("{:6.2f} %".format(num_iters * 100 / len(train_loader)), end = "\r")
 
     # Save the average epoch loss
-    training_losses = list(filter(lambda loss: not np.isnan(loss), training_losses))
     avg_train_loss = np.mean(training_losses)
     med_train_loss = np.median(training_losses)
     net.log("Median training loss: {}".format(med_train_loss))

@@ -21,9 +21,26 @@ class Customized_Loss(nn.Module):
         cosines_preds = torch.cos(theta_preds)
         sines_preds = torch.sin(theta_preds)
 
-        xy_errors = torch.norm(xy_preds - xys, 2, dim = 1)
-        cosines_errors = torch.norm(cosines_preds - cosines, 2, dim = 1)
-        sines_errors = torch.norm(sines_preds - sines, 2, dim = 1)
+        xy_errors = torch.norm(xy_preds - xys, p = 2, dim = 1)
+        cosines_errors = torch.norm(cosines_preds - cosines, p = 2, dim = 1)
+        sines_errors = torch.norm(sines_preds - sines, p = 2, dim = 1)
+
+        # print(xy_preds - xys)
+        # print(xy_errors)
+
+        ''' Assertions '''
+        inf = float("inf")
+
+        assert not torch.isnan(xy_errors).byte().any() # All elements in the tensor are zero (no NaNs)
+        assert not (xy_errors == inf).byte().any() # All elements in the tensor are zero (no infs)
+
+        assert not torch.isnan(cosines_errors).byte().any() # All elements in the tensor are zero (no NaNs)
+        assert not (cosines_errors == inf).byte().any() # All elements in the tensor are zero (no infs)
+
+        assert not torch.isnan(sines_errors).byte().any() # All elements in the tensor are zero (no NaNs)
+        assert not (sines_errors == inf).byte().any() # All elements in the tensor are zero (no infs)
+        ''''''
+
         # theta0_errors = torch.norm(theta_preds - thetas, 2, dim = 1)
         # theta180_errors = torch.norm(np.pi - torch.abs(theta_preds - thetas), 2, dim = 1)
         # theta_errors_both = torch.stack((theta0_errors, theta180_errors), dim = 1)
@@ -31,4 +48,10 @@ class Customized_Loss(nn.Module):
 
         # total_error = self.beta * torch.mean(xy_errors) + torch.mean(theta_errors)
         total_error = torch.mean(xy_errors) + self.beta * (torch.mean(cosines_errors) + torch.mean(sines_errors))
+
+        ''' Assertions '''
+        assert not torch.isnan(total_error).byte().any() # All elements in the tensor are zero (no NaNs)
+        assert not (total_error == inf).byte().any() # All elements in the tensor are zero (no infs)
+        ''''''
+
         return total_error

@@ -268,23 +268,11 @@ class PoseNetSimple(NeuralNetworkModel):
         self.stem_network = nn.Sequential(
             nn.Conv2d(in_channels = 18, out_channels = 64, kernel_size = 7, stride = 2),
             nn.MaxPool2d(kernel_size = 3, stride = 2),
-            nn.ReLU(True),
+            nn.LeakyReLU(inplace = True),
             #
             nn.Conv2d(in_channels = 64, out_channels = 192, kernel_size = 3, stride = 1),
             nn.MaxPool2d(kernel_size = 3, stride = 2),
-            nn.ReLU(True),
-        )
-
-        # Side networks
-        self.side_network_4a = nn.Sequential(
-            nn.AvgPool2d(kernel_size = 5, stride = 3),
-            nn.Conv2d(in_channels = 512, out_channels = 128, kernel_size = 1, stride = 1),
-            nn.ReLU(True),
-            Flatten(),
-            nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
-            nn.ReLU(True),
-            nn.Dropout(p = 0.5),
-            nn.Linear(1024, 3)
+            nn.LeakyReLU(inplace = True),
         )
 
         # Inceptions 3
@@ -313,19 +301,35 @@ class PoseNetSimple(NeuralNetworkModel):
             maxpool3x3_out_channels = 64
         )
 
-        self.flatten = Flatten()
+        # Side networks
+        self.side_network_4a = nn.Sequential(
+            nn.AvgPool2d(kernel_size = 5, stride = 3),
+            nn.Conv2d(in_channels = 512, out_channels = 128, kernel_size = 1, stride = 1),
+            nn.LeakyReLU(inplace = True),
+            Flatten(),
+            nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
+            nn.LeakyReLU(inplace = True),
+            nn.Dropout(p = 0.5),
+            nn.Linear(1024, 3)
+        )
+
         self.maxpool = nn.MaxPool2d(kernel_size = 3, stride = 2, padding = 1)
-        self.avgpool = nn.AvgPool2d(kernel_size = 7, stride = 1)
 
         self.apply(xavier_initialization)
 
     def forward(self, x):
-        out = self.stem_network(x)
+        out_stem = self.stem_network(x)
 
-        out = self.incep_3a(out)
-        out = self.incep_3b(out)
-        out = self.maxpool(out)
+        out_incep_3a = self.incep_3a(out_stem)
+        out_incep_3b = self.incep_3b(out_incep_3a)
+        out_maxpool = self.maxpool(out_incep_3b)
 
-        out = self.incep_4a(out)
-        out1 = self.side_network_4a(out)
+        out_incep_4a = self.incep_4a(out_maxpool)
+        out1 = self.side_network_4a(out_incep_4a)
+        # xy = out1[:, :2]
+        # theta = out1[:, 2:]
+        # theta = torch.atan2(torch.sin(theta), torch.cos(theta))
+        # out1 = torch.cat((xy, theta), dim = 1)
+        assert not torch.isnan(out1).byte().any() # All elements in the tensor are zero (no NaNs)
+        assert not (out1 == float("inf")).byte().any() # All elements in the tensor are zero (no infs)
         return (out1,)
