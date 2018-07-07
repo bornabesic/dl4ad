@@ -96,25 +96,25 @@ class PerceptionCarDataset(Dataset):
     normalize_mu_x = 413025.2
     normalize_mu_y = 5318442
     # Standard deviations in meters
-    normalize_sigma_x = 300
-    normalize_sigma_y = 300
+    normalize_sigma_x = 150
+    normalize_sigma_y = 150
 
     @staticmethod
     def normalize(x, y, theta): # Expects global UTM coordinates
         # This makes x and y independent of the origin
         x -=  PerceptionCarDataset.normalize_mu_x
-        # x /= PerceptionCarDataset.normalize_sigma_x
+        x /= PerceptionCarDataset.normalize_sigma_x
 
         y -=PerceptionCarDataset.normalize_mu_y
-        # y /= PerceptionCarDataset.normalize_sigma_y
+        y /= PerceptionCarDataset.normalize_sigma_y
         return x, y, theta
 
     @staticmethod
     def unnormalize(x, y, theta):
-        # x *= PerceptionCarDataset.normalize_sigma_x
+        x *= PerceptionCarDataset.normalize_sigma_x
         x += PerceptionCarDataset.normalize_mu_x
 
-        # y *= PerceptionCarDataset.normalize_sigma_y
+        y *= PerceptionCarDataset.normalize_sigma_y
         y += PerceptionCarDataset.normalize_mu_y
 
         return x, y, theta
@@ -180,7 +180,7 @@ class PerceptionCarDataset(Dataset):
                     x, y, theta = PerceptionCarDataset.normalize(x, y, theta)
                     ''''''
 
-                    pose = (x, y, theta)
+                    pose = (x, y, np.cos(theta), np.sin(theta))
                     image_paths = map(lambda fn: os.path.join(set_path, fn), filenames)
                     #image_paths = filenames
                     self.data.append((*image_paths, pose))
@@ -196,11 +196,11 @@ class PerceptionCarDataset(Dataset):
             image = Image.open(image_path)
             if self.preprocess is not None:
                 image = self.preprocess(image)
-            x, y, theta = pose
+                x, y, cosine, sine = pose
         else:
 
             *image_paths, pose = self.data[idx]
-            x, y, theta = pose
+            x, y, cosine, sine = pose
 
             # Randomly switch front three and back three images
             switch_front_and_back = np.random.choice((True, False)) if self.augment else False
@@ -226,8 +226,7 @@ class PerceptionCarDataset(Dataset):
             images = tuple(images)
             image = torch.cat(images, dim = 0)
         
-        p = torch.Tensor([x, y, theta])
-
+        p = torch.Tensor([x, y, cosine, sine])
         return (image, p)
 
 from utils import foldr
@@ -259,6 +258,8 @@ class PerceptionCarDatasetMerged(Dataset):
             # x, y, _ = torch.Tensor([x, y, 0]) + dataset.origin_offset
             # pose = torch.Tensor(pose)
             return (image, pose)
+
+        assert False # This shouldn't happen
 
     def __len__(self):
         return self.size

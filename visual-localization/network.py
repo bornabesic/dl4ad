@@ -131,7 +131,7 @@ class PoseNet(NeuralNetworkModel):
             nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
             nn.ReLU(True),
             nn.Dropout(p = 0.7),
-            nn.Linear(1024, 3)
+            nn.Linear(1024, 4)
         )
 
         self.side_network_4d = nn.Sequential(
@@ -142,7 +142,7 @@ class PoseNet(NeuralNetworkModel):
             nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
             nn.ReLU(True),
             nn.Dropout(p = 0.7),
-            nn.Linear(1024, 3)
+            nn.Linear(1024, 4)
         )
 
         # Inceptions 3
@@ -224,7 +224,7 @@ class PoseNet(NeuralNetworkModel):
         self.final_regressor = nn.Sequential(
             nn.Linear(1024, 2048),
             nn.ReLU(True),
-            nn.Linear(2048, 3)
+            nn.Linear(2048, 4)
         )
 
         self.apply(xavier_initialization)
@@ -310,7 +310,7 @@ class PoseNetSimple(NeuralNetworkModel):
             nn.Linear(3 * 3 * 128, 1024), # paper says 4 x 4 ?
             nn.LeakyReLU(inplace = True),
             nn.Dropout(p = 0.5),
-            nn.Linear(1024, 3)
+            nn.Linear(1024, 4)
         )
 
         self.maxpool = nn.MaxPool2d(kernel_size = 3, stride = 2, padding = 1)

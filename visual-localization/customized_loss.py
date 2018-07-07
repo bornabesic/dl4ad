@@ -10,23 +10,26 @@ class Customized_Loss(nn.Module):
         self.beta = beta
 
     def forward(self, output, target):
+        # Ground truth
         xys = target[:, :2]
-        thetas = target[:, 2:]
-        cosines = torch.cos(thetas)
-        sines = torch.sin(thetas)
+        cosines = target[:, 2]
+        sines = target[:, 3]
 
-
+        # Predictions
         xy_preds = output[:, :2]
-        theta_preds = output[:, 2:]
-        cosines_preds = torch.cos(theta_preds)
-        sines_preds = torch.sin(theta_preds)
+        cosines_preds = output[:, 2]
+        sines_preds = output[:, 3]
 
-        xy_errors = torch.norm(xy_preds - xys, p = 2, dim = 1)
-        cosines_errors = torch.norm(cosines_preds - cosines, p = 2, dim = 1)
-        sines_errors = torch.norm(sines_preds - sines, p = 2, dim = 1)
+        # Position error
+        xy_diff = xy_preds - xys
+        xy_errors = torch.norm(xy_diff, p = 2, dim = 1)
 
-        # print(xy_preds - xys)
-        # print(xy_errors)
+        # Orientation error
+        cosines_diff = cosines_preds - cosines
+        cosines_errors = torch.norm(cosines_diff, p = 2)
+
+        sines_diff = sines_preds - sines
+        sines_errors = torch.norm(sines_diff, p = 2)
 
         ''' Assertions '''
         inf = float("inf")
@@ -53,5 +56,7 @@ class Customized_Loss(nn.Module):
         assert not torch.isnan(total_error).byte().any() # All elements in the tensor are zero (no NaNs)
         assert not (total_error == inf).byte().any() # All elements in the tensor are zero (no infs)
         ''''''
+
+        # print(torch.mean(xy_errors), torch.mean(cosines_errors), torch.mean(sines_errors), sep = "\n")
 
         return total_error
