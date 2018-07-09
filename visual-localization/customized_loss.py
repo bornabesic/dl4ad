@@ -50,7 +50,10 @@ class Customized_Loss(nn.Module):
         # theta_errors, _ = torch.min(theta_errors_both, dim = 1)
 
         # total_error = self.beta * torch.mean(xy_errors) + torch.mean(theta_errors)
-        total_error = torch.mean(xy_errors) + self.beta * (torch.mean(cosines_errors) + torch.mean(sines_errors))
+        angle_error = self.beta * (torch.mean(cosines_errors) + torch.mean(sines_errors))
+        position_error = torch.mean(xy_errors) 
+        # print(position_error, angle_error)
+        total_error = position_error + angle_error
 
         ''' Assertions '''
         assert not torch.isnan(total_error).byte().any() # All elements in the tensor are zero (no NaNs)

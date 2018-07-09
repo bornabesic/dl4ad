@@ -103,18 +103,18 @@ class PerceptionCarDataset(Dataset):
     def normalize(x, y, theta): # Expects global UTM coordinates
         # This makes x and y independent of the origin
         x -=  PerceptionCarDataset.normalize_mu_x
-        x /= PerceptionCarDataset.normalize_sigma_x
+        # x /= PerceptionCarDataset.normalize_sigma_x
 
         y -=PerceptionCarDataset.normalize_mu_y
-        y /= PerceptionCarDataset.normalize_sigma_y
+        # y /= PerceptionCarDataset.normalize_sigma_y
         return x, y, theta
 
     @staticmethod
     def unnormalize(x, y, theta):
-        x *= PerceptionCarDataset.normalize_sigma_x
+        # x *= PerceptionCarDataset.normalize_sigma_x
         x += PerceptionCarDataset.normalize_mu_x
 
-        y *= PerceptionCarDataset.normalize_sigma_y
+        # y *= PerceptionCarDataset.normalize_sigma_y
         y += PerceptionCarDataset.normalize_mu_y
 
         return x, y, theta
@@ -347,14 +347,20 @@ def evaluate_median(model, criterion, loader, device): # Expects a loader with b
         losses.append(loss_out.item())
 
         x, y = p[0, :2].cpu().detach().numpy()
-        theta = p[0, 2].cpu().detach().numpy()
+        cosine = p[0, 2].cpu().detach().numpy()
+        sine = p[0, 3].cpu().detach().numpy()
+        theta = np.arctan2(cosine, sine)
         x, y, theta = PerceptionCarDataset.unnormalize(x, y, theta)
+        xy = np.array([x, y])
 
         x_out, y_out = p_out[0, :2].cpu().detach().numpy()
-        theta_out = p_out[0, 2].cpu().detach().numpy()
+        cosine_out = p_out[0, 2].cpu().detach().numpy()
+        sine_out = p_out[0, 3].cpu().detach().numpy()
+        theta_out = np.arctan2(cosine_out, sine_out)
         x_out, y_out, theta_out = PerceptionCarDataset.unnormalize(x_out, y_out, theta_out)
+        xy_out = np.array([x_out, y_out])
 
-        error_x, error_theta = meters_and_degrees_error(x, theta, x_out, theta_out)
+        error_x, error_theta = meters_and_degrees_error(xy, theta, xy_out, theta_out)
 
         x_errors.append(error_x)
         theta_errors.append(error_theta)
@@ -370,9 +376,6 @@ def meters_and_degrees_error(xy, theta, xy_predicted, theta_predicted):
     # d = np.abs(np.sum(np.multiply(q1, q2)))
     # orientation_error = 2 * np.arccos(d) * 180 / np.pi
 
-    sine = np.sin(theta_predicted)
-    cosine = np.cos(theta_predicted)
-    theta_predicted = np.arctan2(sine, cosine)
     diff = np.abs(theta - theta_predicted)
     orientation_error = rad2deg(min(np.pi - diff, diff))
     position_error = np.linalg.norm(xy - xy_predicted)
