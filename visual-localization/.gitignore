@@ -1,10 +1,11 @@
 .vscode/
 __pycache__/
 models/
-gmplot/
 DeepLoc/
 DeepLoc
 DeepLocAugmented/
 DeepLocAugmented
+PerceptionCarDataset
+PerceptionCarDataset2
 deeploc.tar.gz
 loc_dataset

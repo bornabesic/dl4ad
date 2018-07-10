@@ -119,10 +119,11 @@ class PerceptionCarDataset(Dataset):
 
         return x, y, theta
 
-    def __init__(self, set_path, mode, preprocess = default_preprocessing, augment = True):
+    def __init__(self, set_path, mode, preprocess = default_preprocessing, augment = True, only_front_camera = False):
         self.data = []
         self.preprocess = preprocess
         self.augment = augment
+        self.only_front_camera = only_front_camera
 
         if mode not in ("train", "validation", "test", "visualize"):
             raise ValueError("Invalid mode.")
@@ -183,7 +184,10 @@ class PerceptionCarDataset(Dataset):
                     pose = (x, y, np.cos(theta), np.sin(theta))
                     image_paths = map(lambda fn: os.path.join(set_path, fn), filenames)
                     #image_paths = filenames
-                    self.data.append((*image_paths, pose))
+                    if self.only_front_camera:
+                        self.data.append((next(image_paths), pose))
+                    else:
+                        self.data.append((*image_paths, pose))
 
         self.size = len(self.data)
 
@@ -222,9 +226,12 @@ class PerceptionCarDataset(Dataset):
             if self.preprocess is not None:
                 images = map(self.preprocess, images)
 
-            # Concatinate all images (each 3 layer) to one image with 18 layers
             images = tuple(images)
-            image = torch.cat(images, dim = 0)
+            if self.only_front_camera:
+                image = images[0]
+            else:
+                # Concatenate all images (6 images, each 3 channels, RGB) into one image with 18 channels
+                image = torch.cat(images, dim = 0)
         
         p = torch.Tensor([x, y, cosine, sine])
         return (image, p)
@@ -233,8 +240,8 @@ from utils import foldr
 
 class PerceptionCarDatasetMerged(Dataset):
 
-    def __init__(self, *dataset_paths, mode, preprocess = PerceptionCarDataset.default_preprocessing, augment = True):
-        self.datasets = list(map(lambda dp: PerceptionCarDataset(dp, mode, preprocess, augment), dataset_paths))
+    def __init__(self, *dataset_paths, mode, preprocess = PerceptionCarDataset.default_preprocessing, augment = True, only_front_camera = False):
+        self.datasets = list(map(lambda dp: PerceptionCarDataset(dp, mode, preprocess, augment, only_front_camera), dataset_paths))
         self.size = foldr(lambda i, r: len(i) + r, self.datasets, 0)
         
         # self.origin = self.datasets[0].origin

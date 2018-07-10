@@ -33,7 +33,7 @@ class Inception(nn.Module):
         self.branch1 = nn.Sequential(
             nn.Conv2d(in_channels, conv1x1_out_channels, kernel_size = 1),
             # nn.BatchNorm2d(conv1x1_out_channels),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
         )
 
         # 1 x 1 conv -> 3 x 3 conv branch
@@ -41,11 +41,11 @@ class Inception(nn.Module):
             # 1 x 1
             nn.Conv2d(in_channels, conv3x3_in_channels, kernel_size = 1),
             # nn.BatchNorm2d(conv3x3_in_channels),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
             # 3 x 3
             nn.Conv2d(conv3x3_in_channels, conv3x3_out_channels, kernel_size = 3, padding = 1),
             # nn.BatchNorm2d(conv3x3_out_channels),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
         )
 
         # 1 x 1 conv -> 5 x 5 conv branch
@@ -53,11 +53,11 @@ class Inception(nn.Module):
             # 1 x 1
             nn.Conv2d(in_channels, conv5x5_in_channels, kernel_size = 1, padding = 1),
             # nn.BatchNorm2d(conv5x5_in_channels),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
             # 5 x 5
             nn.Conv2d(conv5x5_in_channels, conv5x5_out_channels, kernel_size = 5, padding = 1),
             # nn.BatchNorm2d(conv5x5_out_channels),
-            nn.ReLU(True)
+            nn.LeakyReLU(True)
         )
 
         # 3 x 3 pool -> 1 x 1 conv branch
@@ -67,7 +67,7 @@ class Inception(nn.Module):
             # 1 x 1
             nn.Conv2d(in_channels, maxpool3x3_out_channels, kernel_size = 1),
             # nn.BatchNorm2d(maxpool3x3_out_channels),
-            nn.ReLU(True),
+            nn.LeakyReLU(True),
         )
 
     def forward(self, x):

@@ -22,6 +22,13 @@ args_parser = argparse.ArgumentParser(
 )
 
 args_parser.add_argument(
+	"--only_front_camera",
+	type = bool,
+	help = "Use only front camera of the car as the input of the neural network",
+    default = False
+)
+
+args_parser.add_argument(
 	"--learning_rate",
 	type = float,
 	help = "Optimizer learning rate",
@@ -39,7 +46,7 @@ args_parser.add_argument(
 	"--gamma",
 	type = float,
 	help = "SGD learning rate decay factor",
-    default = 0.9
+    default = 1
 )
 
 args_parser.add_argument(
@@ -60,14 +67,14 @@ args_parser.add_argument(
 	"--batch_size",
 	type = int,
 	help = "Batch size",
-    default = 16
+    default = 32
 )
 
 args_parser.add_argument(
 	"--epochs",
 	type = int,
 	help = "Number of training epochs",
-    default = 50
+    default = 300
 )
 
 args_parser.add_argument(
@@ -87,6 +94,7 @@ args = args_parser.parse_args()
 
 # Parameters
 
+ONLY_FRONT_CAMERA = args.only_front_camera
 LEARNING_RATE = args.learning_rate
 MOMENTUM = args.momentum
 GAMMA = args.gamma
@@ -108,14 +116,16 @@ else:
 train_data = PerceptionCarDatasetMerged(
     "PerceptionCarDataset",
     "PerceptionCarDataset2",
-    mode = "train"
+    mode = "train",
+    only_front_camera = ONLY_FRONT_CAMERA
 )
 valid_data = PerceptionCarDatasetMerged(
     "PerceptionCarDataset",
     "PerceptionCarDataset2",
     mode = "validation",
     preprocess = PerceptionCarDataset.valid_preprocessing,
-    augment = False
+    augment = False,
+    only_front_camera = ONLY_FRONT_CAMERA
 )
 
 # Generate the data loaders
@@ -128,7 +138,7 @@ if MODEL_PATH is not None:
     net.log("Using {}.".format(MODEL_PATH))
 else:
     arch_class = network.get_model_class(ARCHITECTURE)
-    net = arch_class()
+    net = arch_class(only_front_camera = ONLY_FRONT_CAMERA)
 
 net.to(device = device)
 

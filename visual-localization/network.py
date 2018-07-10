@@ -264,9 +264,14 @@ class PoseNetSimple(NeuralNetworkModel):
     def __init__(self, **kwargs):
         super(PoseNetSimple, self).__init__("PoseNetSimple", **kwargs)
 
+        if kwargs["only_front_camera"]:
+            in_channels = 3
+        else:
+            in_channels = 18
+
         # Stem network
         self.stem_network = nn.Sequential(
-            nn.Conv2d(in_channels = 18, out_channels = 64, kernel_size = 7, stride = 2),
+            nn.Conv2d(in_channels = in_channels, out_channels = 64, kernel_size = 7, stride = 2),
             nn.MaxPool2d(kernel_size = 3, stride = 2),
             nn.LeakyReLU(inplace = True),
             #
@@ -326,10 +331,6 @@ class PoseNetSimple(NeuralNetworkModel):
 
         out_incep_4a = self.incep_4a(out_maxpool)
         out1 = self.side_network_4a(out_incep_4a)
-        # xy = out1[:, :2]
-        # theta = out1[:, 2:]
-        # theta = torch.atan2(torch.sin(theta), torch.cos(theta))
-        # out1 = torch.cat((xy, theta), dim = 1)
         assert not torch.isnan(out1).byte().any() # All elements in the tensor are zero (no NaNs)
         assert not (out1 == float("inf")).byte().any() # All elements in the tensor are zero (no infs)
         return (out1,)
