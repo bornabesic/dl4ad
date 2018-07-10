@@ -20,7 +20,7 @@ args_parser = argparse.ArgumentParser(
 
 args_parser.add_argument(
 	"--Update_Interval",
-	type = bool,
+	type = float,
 	help = "Time per image/pose",
     default = 0.05
 )
