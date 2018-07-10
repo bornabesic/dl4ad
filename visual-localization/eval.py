@@ -10,8 +10,6 @@ import network
 from customized_loss import Customized_Loss
 from transformations import euler_from_quaternion
 
-
-
 # Parse CLI arguments
 args_parser = argparse.ArgumentParser(
 	formatter_class = argparse.ArgumentDefaultsHelpFormatter
@@ -29,12 +27,6 @@ args_parser.add_argument(
         help = "Time per image/pose",
         default = 0.5
 )
-
-# args_parser.add_argument(
-# 	"dataset",
-# 	type = str,
-# 	help = "Dataset to use",
-# )
 
 args_parser.add_argument(
 	"--mode",
@@ -58,9 +50,7 @@ MODE = args.mode
 # DATASET = args.dataset
 VISUALIZE = args.visualize
 UPDATE_INTERVAL = args.update_interval
-SHUFFLE_DATASET = args.shuffle_dataset
 print("Mode: {}".format(MODE))
-# print("Dataset: {}".format(DATASET))
 
 # Device - use CPU is CUDA is not available
 if torch.cuda.is_available():
@@ -73,7 +63,6 @@ net = network.NeuralNetworkModel.load(MODEL_PATH)
 net.to(device = device)
 
 # Dataset
-#data_class = getattr(dataset, DATASET)
 data = PerceptionCarDatasetMerged("PerceptionCarDataset","PerceptionCarDataset2", mode = MODE, preprocess = PerceptionCarDataset.valid_preprocessing)
 data_loader = make_loader(data, shuffle = False, batch_size = 1, num_workers = 4)
 print("Samples: {}".format(len(data)))
