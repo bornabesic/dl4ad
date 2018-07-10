@@ -10,6 +10,8 @@ import network
 from customized_loss import Customized_Loss
 from transformations import euler_from_quaternion
 
+
+
 # Parse CLI arguments
 args_parser = argparse.ArgumentParser(
 	formatter_class = argparse.ArgumentDefaultsHelpFormatter
@@ -19,6 +21,13 @@ args_parser.add_argument(
 	"model_path",
 	type = str,
 	help = "Path to the saved model parameters file"
+)
+
+args_parser.add_argument(
+        "--update_interval",
+        type = float,
+        help = "Time per image/pose",
+        default = 0.5
 )
 
 # args_parser.add_argument(
@@ -48,6 +57,8 @@ MODEL_PATH = args.model_path
 MODE = args.mode
 # DATASET = args.dataset
 VISUALIZE = args.visualize
+UPDATE_INTERVAL = args.update_interval
+SHUFFLE_DATASET = args.shuffle_dataset
 print("Mode: {}".format(MODE))
 # print("Dataset: {}".format(DATASET))
 
@@ -63,8 +74,8 @@ net.to(device = device)
 
 # Dataset
 #data_class = getattr(dataset, DATASET)
-data = PerceptionCarDatasetMerged("PerceptionCarDataset", "PerceptionCarDataset2", mode = MODE, preprocess = PerceptionCarDataset.valid_preprocessing)
-data_loader = make_loader(data, batch_size = 1, num_workers = 4)
+data = PerceptionCarDatasetMerged("PerceptionCarDataset","PerceptionCarDataset2", mode = MODE, preprocess = PerceptionCarDataset.valid_preprocessing)
+data_loader = make_loader(data, shuffle = False, batch_size = 1, num_workers = 4)
 print("Samples: {}".format(len(data)))
 
 # Loss function
@@ -77,26 +88,27 @@ print("Median {} loss: {}".format(MODE, loss_median))
 
 
 if VISUALIZE:
-	from visualize import PosePlotter
+        from visualize import PosePlotter
+        plotter = PosePlotter(update_interval = UPDATE_INTERVAL)
+        plotter.register("Ground truth", "red")
+        plotter.register("NN prediction", "blue")
+        net.eval()
 
-	plotter = PosePlotter()
-	plotter.register("Ground truth", "red")
-	plotter.register("NN prediction", "blue")
-	net.eval()
-	for images, ps in data_loader:
-		images = images.to(device = device)
-		ps = ps.to(device = device)
-		
-		ps_outs = net(images)
-		# Prediction
-		x_pred, y_pred, theta_pred = ps_outs[-1].view(-1).cpu().detach().numpy()
-		x_pred, y_pred, theta_pred = PerceptionCarDataset.unnormalize(x_pred, y_pred, theta_pred)
-		lat_pred, lng_pred = PosePlotter.utm2latlng(x_pred, y_pred)
+        for images, ps in data_loader:
+                images = images.to(device = device)
+                ps = ps.to(device = device)
+                ps_outs = net(images)
+                # Prediction
+                x_pred, y_pred, cosine, sine = ps_outs[-1].view(-1).cpu().detach().numpy()
+                theta_pred = np.arctan2(sine, cosine)
+                x_pred, y_pred, theta_pred = PerceptionCarDataset.unnormalize(x_pred, y_pred, theta_pred)
+                lat_pred, lng_pred = PosePlotter.utm2latlng(x_pred, y_pred)
 		# Ground truth
-		x, y, theta = ps.view(-1).cpu().numpy()
-		x, y, theta = PerceptionCarDataset.unnormalize(x, y, theta)
-		lat, lng = PosePlotter.utm2latlng(x, y)
+                x, y, cosine, sine = ps.view(-1).cpu().numpy()
+                theta = np.arctan2(sine, cosine)
+                x, y, theta = PerceptionCarDataset.unnormalize(x, y, theta)
+                lat, lng = PosePlotter.utm2latlng(x, y)
 		# Visualize on the map
-		plotter.update("Ground truth", x, y, theta)
-		plotter.update("NN prediction", x_pred, y_pred, theta_pred)
-		plotter.draw()
+                plotter.update("Ground truth", x, y, theta)
+                plotter.update("NN prediction", x_pred, y_pred, theta_pred)
+                plotter.draw()

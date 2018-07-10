@@ -13,21 +13,6 @@ from transformations import euler_from_quaternion
 from utils import rad2deg
 import argparse
 
-# Parse CLI arguments
-args_parser = argparse.ArgumentParser(
-	formatter_class = argparse.ArgumentDefaultsHelpFormatter
-)
-
-args_parser.add_argument(
-	"--Update_Interval",
-	type = float,
-	help = "Time per image/pose",
-    default = 0.05
-)
-
-args = args_parser.parse_args()
-UPDATE_INTERVAL = args.Update_Interval
-
 class PosePlotter:
 
     UTM_zone = (32, "U")
@@ -146,6 +131,23 @@ class PosePlotter:
                 idx = 0
 
 if __name__ == "__main__":
+
+
+# Parse CLI arguments
+    args_parser = argparse.ArgumentParser(
+        formatter_class = argparse.ArgumentDefaultsHelpFormatter
+    )
+
+    args_parser.add_argument(
+        "--Update_Interval",
+        type = float,
+        help = "Time per image/pose",
+        default = 1
+    )
+
+    args = args_parser.parse_args()
+    UPDATE_INTERVAL = args.Update_Interval
+
 
     plotter = PosePlotter(update_interval = UPDATE_INTERVAL, trajectory = False)
     plotter.register("GT", "red")
