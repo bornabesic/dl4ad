@@ -11,6 +11,22 @@ import utm
 from dataset import PerceptionCarDataset, PerceptionCarDatasetMerged
 from transformations import euler_from_quaternion
 from utils import rad2deg
+import argparse
+
+# Parse CLI arguments
+args_parser = argparse.ArgumentParser(
+	formatter_class = argparse.ArgumentDefaultsHelpFormatter
+)
+
+args_parser.add_argument(
+	"--Update_Interval",
+	type = bool,
+	help = "Time per image/pose",
+    default = 0.05
+)
+
+args = args_parser.parse_args()
+UPDATE_INTERVAL = args.Update_Interval
 
 class PosePlotter:
 
@@ -131,7 +147,7 @@ class PosePlotter:
 
 if __name__ == "__main__":
 
-    plotter = PosePlotter(update_interval = 0.02, trajectory = False)
+    plotter = PosePlotter(update_interval = UPDATE_INTERVAL, trajectory = False)
     plotter.register("GT", "red")
     # plotter.register("x", "blue") # TEST
 

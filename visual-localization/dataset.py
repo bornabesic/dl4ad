@@ -200,7 +200,9 @@ class PerceptionCarDataset(Dataset):
             image = Image.open(image_path)
             if self.preprocess is not None:
                 image = self.preprocess(image)
-                x, y, cosine, sine = pose
+            
+            x, y, theta = pose
+            p = torch.Tensor([x, y, theta])
         else:
 
             *image_paths, pose = self.data[idx]
@@ -233,7 +235,7 @@ class PerceptionCarDataset(Dataset):
                 # Concatenate all images (6 images, each 3 channels, RGB) into one image with 18 channels
                 image = torch.cat(images, dim = 0)
         
-        p = torch.Tensor([x, y, cosine, sine])
+            p = torch.Tensor([x, y, cosine, sine])
         return (image, p)
 
 from utils import foldr
