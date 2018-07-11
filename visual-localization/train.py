@@ -29,6 +29,13 @@ args_parser.add_argument(
 )
 
 args_parser.add_argument(
+	"--split",
+	type = str,
+	help = "What type of train / validation / test split files will be used",
+    default = "manual"
+)
+
+args_parser.add_argument(
 	"--learning_rate",
 	type = float,
 	help = "Optimizer learning rate",
@@ -94,6 +101,7 @@ args = args_parser.parse_args()
 
 # Parameters
 
+SPLIT = args.split
 ONLY_FRONT_CAMERA = args.only_front_camera
 LEARNING_RATE = args.learning_rate
 MOMENTUM = args.momentum
@@ -125,7 +133,8 @@ valid_data = PerceptionCarDatasetMerged(
     mode = "validation",
     preprocess = PerceptionCarDataset.valid_preprocessing,
     augment = False,
-    only_front_camera = ONLY_FRONT_CAMERA
+    only_front_camera = ONLY_FRONT_CAMERA,
+    split = SPLIT
 )
 
 # Generate the data loaders

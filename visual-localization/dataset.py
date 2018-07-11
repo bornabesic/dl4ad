@@ -119,7 +119,7 @@ class PerceptionCarDataset(Dataset):
 
         return x, y, theta
 
-    def __init__(self, set_path, mode, preprocess = default_preprocessing, augment = True, only_front_camera = False):
+    def __init__(self, set_path, mode, preprocess = default_preprocessing, augment = True, only_front_camera = False, split = "manual"):
         self.data = []
         self.preprocess = preprocess
         self.augment = augment
@@ -167,7 +167,7 @@ class PerceptionCarDataset(Dataset):
                 # image_path = os.path.join(set_path, filename)
                 self.data.append((image_path, pose))
         else:
-            poses_path = os.path.join(set_path, mode + ".txt")
+            poses_path = os.path.join(set_path, "{}.{}.txt".format(mode, split))
             for *filenames, x, y, qw, qx, qy, qz in read_table(
                 poses_path,
                 types = (str, str, str, str, str, str, float, float, float, float, float, float),
@@ -242,8 +242,8 @@ from utils import foldr
 
 class PerceptionCarDatasetMerged(Dataset):
 
-    def __init__(self, *dataset_paths, mode, preprocess = PerceptionCarDataset.default_preprocessing, augment = True, only_front_camera = False):
-        self.datasets = list(map(lambda dp: PerceptionCarDataset(dp, mode, preprocess, augment, only_front_camera), dataset_paths))
+    def __init__(self, *dataset_paths, mode, preprocess = PerceptionCarDataset.default_preprocessing, augment = True, only_front_camera = False, split = "manual"):
+        self.datasets = list(map(lambda dp: PerceptionCarDataset(dp, mode, preprocess, augment, only_front_camera, split), dataset_paths))
         self.size = foldr(lambda i, r: len(i) + r, self.datasets, 0)
         
         # self.origin = self.datasets[0].origin

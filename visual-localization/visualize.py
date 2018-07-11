@@ -139,14 +139,14 @@ if __name__ == "__main__":
     )
 
     args_parser.add_argument(
-        "--Update_Interval",
+        "--update_interval",
         type = float,
-        help = "Time per image/pose",
+        help = "Time in seconds per image / pose",
         default = 1
     )
 
     args = args_parser.parse_args()
-    UPDATE_INTERVAL = args.Update_Interval
+    UPDATE_INTERVAL = args.update_interval
 
 
     plotter = PosePlotter(update_interval = UPDATE_INTERVAL, trajectory = False)
