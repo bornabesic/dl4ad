@@ -1,7 +1,10 @@
 import json
 import argparse
 import os
-import matplotlib as plt
+import numpy as np
+import matplotlib as mpl
+mpl.use("Agg")
+import matplotlib.pyplot as plt
 
 # Parse CLI arguments
 args_parser = argparse.ArgumentParser(
@@ -9,7 +12,7 @@ args_parser = argparse.ArgumentParser(
 )
 
 args_parser.add_argument(
-	"model_path",
+	"--model_path",
 	type = str,
 	help = "Path to model that should be plotted"
 )
@@ -18,7 +21,7 @@ args = args_parser.parse_args()
 # Split model path
 MODEL_PATH = args.model_path
 path, filename = os.path.split(MODEL_PATH)
-intentifier, _ = os.path.splitext(filename)
+identifier, _ = os.path.splitext(filename)
 
 # Read model information
 with open(MODEL_PATH, "rt") as json_file:
@@ -29,6 +32,7 @@ model_path = params["model_path"]
 train_losses = params["train_losses"]
 valid_losses = params["valid_losses"]
 only_front_camera = params["only_front_camera"]
+x = np.arange(len(train_losses))
 
 # Plot the losses over the epochs
 loss_fig = plt.figure()
@@ -41,7 +45,8 @@ loss_ax.grid(True)
 if only_front_camera:
     plt.title(architecture + " with 1 image")
 else:
-    plt.title(architecture + "with 6 images")
+    plt.title(architecture + " with 6 images")
 loss_fig.legend()
 loss_fig.savefig("{}/{}.loss.png".format(path, identifier))
-plt.close(losse_fig)
+plt.close(loss_fig)
+print("Everything Done")
