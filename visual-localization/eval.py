@@ -21,6 +21,8 @@ args_parser.add_argument(
 	help = "Path to the saved model parameters file"
 )
 
+
+
 args_parser.add_argument(
         "--only_front_camera",
         type = bool,
@@ -42,6 +44,15 @@ args_parser.add_argument(
 	default = "validation"
 )
 
+
+args_parser.add_argument(
+        "--split",
+        type = str,
+        help = "Split mode. manual(default) or traj)",
+        default = "manual"
+)
+
+
 args_parser.add_argument(
 	"--visualize",
 	type = bool,
@@ -55,6 +66,7 @@ args = args_parser.parse_args()
 MODEL_PATH = args.model_path
 MODE = args.mode
 ONLY_FRONT_CAMERA = args.only_front_camera
+SPLITMODE = args.split
 # DATASET = args.dataset
 VISUALIZE = args.visualize
 UPDATE_INTERVAL = args.update_interval
@@ -71,7 +83,7 @@ net = network.NeuralNetworkModel.load(MODEL_PATH)
 net.to(device = device)
 
 # Dataset
-data = PerceptionCarDatasetMerged("PerceptionCarDataset","PerceptionCarDataset2", mode = MODE,only_front_camera = ONLY_FRONT_CAMERA, preprocess = PerceptionCarDataset.valid_preprocessing)
+data = PerceptionCarDatasetMerged("PerceptionCarDataset","PerceptionCarDataset2", mode = MODE,split = SPLITMODE, only_front_camera = ONLY_FRONT_CAMERA, preprocess = PerceptionCarDataset.valid_preprocessing)
 data_loader = make_loader(data, shuffle = False, batch_size = 1, num_workers = 4)
 print("Samples: {}".format(len(data)))
 
