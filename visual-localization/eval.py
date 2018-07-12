@@ -16,9 +16,16 @@ args_parser = argparse.ArgumentParser(
 )
 
 args_parser.add_argument(
-	"model_path",
+	"--model_path",
 	type = str,
 	help = "Path to the saved model parameters file"
+)
+
+args_parser.add_argument(
+        "--only_front_camera",
+        type = bool,
+        help = "Use only front camera",
+        default = False
 )
 
 args_parser.add_argument(
@@ -47,6 +54,7 @@ args = args_parser.parse_args()
 # Parameters
 MODEL_PATH = args.model_path
 MODE = args.mode
+ONLY_FRONT_CAMERA = args.only_front_camera
 # DATASET = args.dataset
 VISUALIZE = args.visualize
 UPDATE_INTERVAL = args.update_interval
@@ -63,7 +71,7 @@ net = network.NeuralNetworkModel.load(MODEL_PATH)
 net.to(device = device)
 
 # Dataset
-data = PerceptionCarDatasetMerged("PerceptionCarDataset","PerceptionCarDataset2", mode = MODE, preprocess = PerceptionCarDataset.valid_preprocessing)
+data = PerceptionCarDatasetMerged("PerceptionCarDataset","PerceptionCarDataset2", mode = MODE,only_front_camera = ONLY_FRONT_CAMERA, preprocess = PerceptionCarDataset.valid_preprocessing)
 data_loader = make_loader(data, shuffle = False, batch_size = 1, num_workers = 4)
 print("Samples: {}".format(len(data)))
 
