@@ -9,6 +9,7 @@ from dataset import PerceptionCarDataset, PerceptionCarDatasetMerged, make_loade
 import network
 from customized_loss import Customized_Loss
 from transformations import euler_from_quaternion
+from smoothing import TrajectorySmoother
 
 # Parse CLI arguments
 args_parser = argparse.ArgumentParser(
@@ -96,24 +97,36 @@ if VISUALIZE:
         plotter.register("NN prediction", "blue")
         net.eval()
 
+        smoother = TrajectorySmoother()
+        x_origin, y_origin, theta_origin = PerceptionCarDataset.unnormalize(0, 0, 0)
+        smoother.update(x_origin, y_origin, theta_origin)
+
         for images, ps in data_loader:
                 images = images.to(device = device)
                 ps = ps.to(device = device)
                 ps_outs = net(images)
+
                 # Prediction
                 x_pred, y_pred, cosine, sine = ps_outs[-1].view(-1).cpu().detach().numpy()
                 theta_pred = np.arctan2(sine, cosine)
                 x_pred, y_pred, theta_pred = PerceptionCarDataset.unnormalize(x_pred, y_pred, theta_pred)
                 lat_pred, lng_pred = PosePlotter.utm2latlng(x_pred, y_pred)
-		# Ground truth
+
+                # Smoothing
+                print(smoother.probability(x_pred, y_pred, theta_pred) * 100)
+                smoother.update(x_pred, y_pred, theta_pred)
+
+                # Ground truth
                 x, y, cosine, sine = ps.view(-1).cpu().numpy()
                 theta = np.arctan2(sine, cosine)
                 x, y, theta = PerceptionCarDataset.unnormalize(x, y, theta)
                 lat, lng = PosePlotter.utm2latlng(x, y)
+
                 # Print the error
                 position_error, orientation_error = meters_and_degrees_error(np.array([x, y]), theta, np.array([x_pred, y_pred]), theta_pred)
                 print("Error: {:.2f} m, {:.2f} °".format(position_error, orientation_error))
-		# Visualize on the map
+
+                # Visualize on the map
                 plotter.update("Ground truth", x, y, theta)
                 plotter.update("NN prediction", x_pred, y_pred, theta_pred)
                 plotter.draw()
