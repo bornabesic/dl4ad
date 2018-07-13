@@ -111,9 +111,14 @@ class PoseNet(NeuralNetworkModel):
     def __init__(self, **kwargs):
         super(PoseNet, self).__init__("PoseNet", **kwargs)
 
+        if kwargs["only_front_camera"]:
+            in_channels = 3
+        else:
+            in_channels = 18
+
         # Stem network
         self.stem_network = nn.Sequential(
-            nn.Conv2d(in_channels = 18, out_channels = 64, kernel_size = 7, stride = 2),
+            nn.Conv2d(in_channels = in_channels, out_channels = 64, kernel_size = 7, stride = 2),
             nn.MaxPool2d(kernel_size = 3, stride = 2),
             nn.ReLU(True),
             #
