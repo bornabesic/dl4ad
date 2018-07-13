@@ -143,11 +143,11 @@ valid_loader = make_loader(valid_data, batch_size = 1, num_workers = 4)
 
 # Define the model
 if MODEL_PATH is not None:
-    net = network.NeuralNetworkModel.load(MODEL_PATH)
+    net = network.NeuralNetworkModel.load(MODEL_PATH, device)
     net.log("Using {}.".format(MODEL_PATH))
 else:
     arch_class = network.get_model_class(ARCHITECTURE)
-    net = arch_class(only_front_camera = ONLY_FRONT_CAMERA)
+    net = arch_class(only_front_camera = ONLY_FRONT_CAMERA, split = SPLIT)
 
 net.to(device = device)
 

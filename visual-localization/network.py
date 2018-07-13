@@ -80,7 +80,7 @@ class NeuralNetworkModel(nn.Module):
         self.logger.close()
 
     @staticmethod
-    def load(json_path):
+    def load(json_path, device):
         with open(json_path, "rt") as json_file:
             params = json.load(json_file)
 
@@ -96,7 +96,7 @@ class NeuralNetworkModel(nn.Module):
 
         arch_class = get_model_class(architecture)
         net = arch_class(**params)
-        net.load_state_dict(torch.load(model_path))
+        net.load_state_dict(torch.load(model_path, map_location = device.type))
         net.train_losses = train_losses
         net.valid_losses = valid_losses
 
