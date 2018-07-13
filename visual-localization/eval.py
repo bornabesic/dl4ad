@@ -34,7 +34,7 @@ args_parser.add_argument(
         "--update_interval",
         type = float,
         help = "Time per image/pose",
-        default = 0.5
+        default = 0.01
 )
 
 args_parser.add_argument(
@@ -49,7 +49,7 @@ args_parser.add_argument(
         "--split",
         type = str,
         help = "Split mode. manual(default) or traj)",
-        default = "manual"
+        default = "traj"
 )
 
 
@@ -66,7 +66,7 @@ args = args_parser.parse_args()
 MODEL_PATH = args.model_path
 MODE = args.mode
 ONLY_FRONT_CAMERA = args.only_front_camera
-SPLITMODE = args.split
+SPLIT = args.split
 # DATASET = args.dataset
 VISUALIZE = args.visualize
 UPDATE_INTERVAL = args.update_interval
@@ -83,7 +83,14 @@ net = network.NeuralNetworkModel.load(MODEL_PATH, device)
 net.to(device = device)
 
 # Dataset
-data = PerceptionCarDatasetMerged("PerceptionCarDataset","PerceptionCarDataset2", mode = MODE,split = SPLITMODE, only_front_camera = ONLY_FRONT_CAMERA, preprocess = PerceptionCarDataset.valid_preprocessing)
+data = PerceptionCarDatasetMerged(
+        "PerceptionCarDataset",
+        "PerceptionCarDataset2",
+        mode = MODE,
+        preprocess = PerceptionCarDataset.valid_preprocessing,
+        only_front_camera = ONLY_FRONT_CAMERA,
+        split = SPLIT
+)
 data_loader = make_loader(data, shuffle = False, batch_size = 1, num_workers = 4)
 print("Samples: {}".format(len(data)))
 
@@ -92,14 +99,13 @@ criterion = Customized_Loss()
 
 if VISUALIZE:
         from visualize import PosePlotter
-        plotter = PosePlotter(update_interval = UPDATE_INTERVAL, trajectory = False)
+        plotter = PosePlotter(update_interval = UPDATE_INTERVAL, trajectory = True)
         plotter.register("Ground truth", "red")
-        plotter.register("NN prediction", "blue")
+        # plotter.register("NN prediction", "blue")
+        plotter.register("Smoothed NN prediction", "green")
         net.eval()
 
         smoother = TrajectorySmoother()
-        x_origin, y_origin, theta_origin = PerceptionCarDataset.unnormalize(0, 0, 0)
-        smoother.update(x_origin, y_origin, theta_origin)
 
         for images, ps in data_loader:
                 images = images.to(device = device)
@@ -113,7 +119,11 @@ if VISUALIZE:
                 lat_pred, lng_pred = PosePlotter.utm2latlng(x_pred, y_pred)
 
                 # Smoothing
-                print(smoother.probability(x_pred, y_pred, theta_pred) * 100)
+
+                if len(smoother.positions) == 0:
+                        smoother.update(x_pred, y_pred, theta_pred)
+                x_pred_smooth, y_pred_smooth = smoother.smooth(x_pred, y_pred, theta_pred)
+                theta_smooth = theta_pred
                 smoother.update(x_pred, y_pred, theta_pred)
 
                 # Ground truth
@@ -124,11 +134,15 @@ if VISUALIZE:
 
                 # Print the error
                 position_error, orientation_error = meters_and_degrees_error(np.array([x, y]), theta, np.array([x_pred, y_pred]), theta_pred)
-                print("Error: {:.2f} m, {:.2f} °".format(position_error, orientation_error))
+                position_error_smooth, orientation_error_smooth = meters_and_degrees_error(np.array([x, y]), theta, np.array([x_pred_smooth, y_pred_smooth]), theta_smooth)
+                print("Error:")
+                print("\tNN: {:.2f} m, {:.2f} °".format(position_error, orientation_error))
+                print("\tSmoothing: {:.2f} m, {:.2f} °".format(position_error_smooth, orientation_error_smooth))
 
                 # Visualize on the map
                 plotter.update("Ground truth", x, y, theta)
-                plotter.update("NN prediction", x_pred, y_pred, theta_pred)
+                # plotter.update("NN prediction", x_pred, y_pred, theta_pred)
+                plotter.update("Smoothed NN prediction", x_pred_smooth, y_pred_smooth, theta_smooth)
                 plotter.draw()
 else:
         # Evaluate on the data
