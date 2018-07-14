@@ -4,7 +4,7 @@ from scipy.spatial.distance import cosine
 
 class TrajectorySmoother:
 
-    def __init__(self, num_points = 10):
+    def __init__(self, num_points = 15):
         self.positions = []
 
         self.position_diffs = []
@@ -55,5 +55,5 @@ class TrajectorySmoother:
 
         if self.last_position is None:
             self.last_position = np.mean(self.positions, axis = 0)
-        self.last_position = p * np.array((x, y)) + (1 - p) * 0.9 * (self.last_position + speed * direction) + (1 - p) * 0.1 * np.mean(self.positions, axis = 0)
+        self.last_position = p * np.array((x, y)) + (1 - p) * 0.9 * (self.last_position + 1.75 * direction) + (1 - p) * 0.1 * np.mean(self.positions, axis = 0)
         return self.last_position
