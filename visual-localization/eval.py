@@ -3,6 +3,8 @@
 import torch
 import argparse
 import numpy as np
+from PIL import Image
+import cv2
 
 import dataset
 from dataset import PerceptionCarDataset, PerceptionCarDatasetMerged, make_loader, evaluate_median, meters_and_degrees_error
@@ -34,7 +36,7 @@ args_parser.add_argument(
         "--update_interval",
         type = float,
         help = "Time per image/pose",
-        default = 0.01
+        default = 0.005
 )
 
 args_parser.add_argument(
@@ -82,6 +84,9 @@ else:
 net = network.NeuralNetworkModel.load(MODEL_PATH, device)
 net.to(device = device)
 
+print("ONLY_FRONT_CAMERA", ONLY_FRONT_CAMERA)
+input()
+
 # Dataset
 data = PerceptionCarDatasetMerged(
         "PerceptionCarDataset",
@@ -89,7 +94,8 @@ data = PerceptionCarDatasetMerged(
         mode = MODE,
         preprocess = PerceptionCarDataset.valid_preprocessing,
         only_front_camera = ONLY_FRONT_CAMERA,
-        split = SPLIT
+        split = SPLIT,
+        return_image_paths = True
 )
 data_loader = make_loader(data, shuffle = False, batch_size = 1, num_workers = 4)
 print("Samples: {}".format(len(data)))
@@ -104,13 +110,13 @@ if VISUALIZE:
         from visualize import PosePlotter
         plotter = PosePlotter(update_interval = UPDATE_INTERVAL, trajectory = True)
         plotter.register("Ground truth", "red")
-        # plotter.register("NN prediction", "blue")
+        plotter.register("NN prediction", "blue")
         plotter.register("Smoothed NN prediction", "green")
         net.eval()
 
         smoother = TrajectorySmoother()
 
-        for images, ps in data_loader:
+        for images, ps, paths in data_loader:
                 images = images.to(device = device)
                 ps = ps.to(device = device)
                 ps_outs = net(images)
@@ -148,9 +154,41 @@ if VISUALIZE:
 
                 # Visualize on the map
                 plotter.update("Ground truth", x, y, theta)
-                # plotter.update("NN prediction", x_pred, y_pred, theta_pred)
+                plotter.update("NN prediction", x_pred, y_pred, theta_pred)
                 plotter.update("Smoothed NN prediction", x_pred_smooth, y_pred_smooth, theta_smooth)
                 plotter.draw()
+
+                # Show image(s)
+                if ONLY_FRONT_CAMERA:
+                        front_center = paths[0][0]
+                        img = Image.open(front_center).resize((640, 360))
+                        image_cv = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+                        cv2.imshow("Image", image_cv)
+                        cv2.waitKey(1)
+                else:
+                        front_center = paths[0][0]
+                        front_left = paths[1][0]
+                        front_right = paths[2][0]
+                        back_center = paths[3][0]
+                        back_left = paths[4][0]
+                        back_right = paths[5][0]
+
+                        front = np.hstack((
+                                Image.open(front_left).resize((320, 180)),
+                                Image.open(front_center).resize((320, 180)),
+                                Image.open(front_right).resize((320, 180))
+                        ))
+
+                        back = np.hstack((
+                                Image.open(back_left).resize((320, 180)),
+                                Image.open(back_center).resize((320, 180)),
+                                Image.open(back_right).resize((320, 180))
+                        ))
+
+                        img = np.vstack((front, back))
+                        image_cv = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+                        cv2.imshow("Image", image_cv)
+                        cv2.waitKey(1)
 
         print(np.median(position_errors), np.median(orientation_errors))
         print(np.median(position_errors_smooth), np.median(orientation_errors_smooth))
