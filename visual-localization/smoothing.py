@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import multivariate_normal
+from scipy.spatial.distance import cosine
 
 class TrajectorySmoother:
 
@@ -8,19 +9,18 @@ class TrajectorySmoother:
 
         self.position_diffs = []
         self.num_points = num_points
-        # self.mean = 0.5
-        # self.variance = 0.5
+
+        self.last_position = 0
 
     def update(self, x, y, theta):
         if len(self.positions) >= self.num_points:
             self.positions.pop(0)
+        
         self.positions.append(np.array((x, y)))
 
-        self.position_diffs.clear()
-
-        for i in range(1, len(self.positions)):
-            xy1 = self.positions[i - 1]
-            xy2 = self.positions[i]
+        if len(self.positions) >= 2:
+            xy2 = self.positions[-1]
+            xy1 = self.positions[-2]
             self.position_diffs.append(xy2 - xy1)
 
         self.translation_mean = np.mean(self.position_diffs, axis = 0)
@@ -38,4 +38,22 @@ class TrajectorySmoother:
 
     def smooth(self, x, y, theta):
         p_xy = self.probability(x, y, theta)
-        return p_xy * np.array((x, y)) + (1 - p_xy) * (np.median(self.positions, axis = 0))
+
+        tx, ty = np.array((x, y)) - self.last_position
+        theta_movement = np.arctan2(ty, tx)
+
+        theta = -theta - np.pi / 2 
+        theta_diff = np.abs(theta - theta_movement)
+        theta_error = min(np.pi - theta_diff, theta_diff)
+        p_theta = max(1 - theta_error / np.pi, 0)
+
+        direction = np.array((np.cos(theta), -np.sin(theta)))
+        speed = np.median(list(map(np.linalg.norm, self.position_diffs[:-5]))) if len(self.position_diffs) > 5 else 1
+        
+
+        p = p_xy * p_theta if self.last_position is not 0 else p_xy
+
+        if self.last_position is None:
+            self.last_position = np.mean(self.positions, axis = 0)
+        self.last_position = p * np.array((x, y)) + (1 - p) * 0.9 * (self.last_position + speed * direction) + (1 - p) * 0.1 * np.mean(self.positions, axis = 0)
+        return self.last_position

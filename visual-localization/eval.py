@@ -98,6 +98,9 @@ print("Samples: {}".format(len(data)))
 criterion = Customized_Loss()
 
 if VISUALIZE:
+        position_errors, orientation_errors = [], []
+        position_errors_smooth, orientation_errors_smooth = [], []
+
         from visualize import PosePlotter
         plotter = PosePlotter(update_interval = UPDATE_INTERVAL, trajectory = True)
         plotter.register("Ground truth", "red")
@@ -138,12 +141,19 @@ if VISUALIZE:
                 print("Error:")
                 print("\tNN: {:.2f} m, {:.2f} °".format(position_error, orientation_error))
                 print("\tSmoothing: {:.2f} m, {:.2f} °".format(position_error_smooth, orientation_error_smooth))
+                position_errors.append(position_error)
+                orientation_errors.append(orientation_error)
+                position_errors_smooth.append(position_error_smooth)
+                orientation_errors_smooth.append(orientation_error_smooth)
 
                 # Visualize on the map
                 plotter.update("Ground truth", x, y, theta)
                 # plotter.update("NN prediction", x_pred, y_pred, theta_pred)
                 plotter.update("Smoothed NN prediction", x_pred_smooth, y_pred_smooth, theta_smooth)
                 plotter.draw()
+
+        print(np.median(position_errors), np.median(orientation_errors))
+        print(np.median(position_errors_smooth), np.median(orientation_errors_smooth))
 else:
         # Evaluate on the data
         x_error_median, q_error_median, loss_median = evaluate_median(net, criterion, data_loader, device)
