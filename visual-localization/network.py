@@ -96,7 +96,7 @@ class NeuralNetworkModel(nn.Module):
 
         arch_class = get_model_class(architecture)
         net = arch_class(**params)
-        net.load_state_dict(torch.load(model_path, map_location = device.type))
+        net.load_state_dict(torch.load(model_path, map_location = lambda storage, loc: storage))
         net.train_losses = train_losses
         net.valid_losses = valid_losses
 
@@ -115,6 +115,8 @@ class PoseNet(NeuralNetworkModel):
             in_channels = 3
         else:
             in_channels = 18
+
+        
 
         # Stem network
         self.stem_network = nn.Sequential(

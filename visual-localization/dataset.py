@@ -119,11 +119,18 @@ class PerceptionCarDataset(Dataset):
 
         return x, y, theta
 
-    def __init__(self, set_path, mode, preprocess = default_preprocessing, augment = True, only_front_camera = False, split = "manual"):
+    def __init__(self, set_path, mode, preprocess = default_preprocessing, augment = True, only_front_camera = False, split = "manual", return_image_paths = False):
         self.data = []
         self.preprocess = preprocess
         self.augment = augment
         self.only_front_camera = only_front_camera
+        self.return_image_paths = return_image_paths
+
+        print("Data:", self.data)
+        print("Augment:", self.augment)
+        print("OFC:", self.only_front_camera)
+        print("RIP:", self.return_image_paths)
+        print("---------------------")
 
         if mode not in ("train", "validation", "test", "visualize"):
             raise ValueError("Invalid mode.")
@@ -236,14 +243,18 @@ class PerceptionCarDataset(Dataset):
                 image = torch.cat(images, dim = 0)
         
             p = torch.Tensor([x, y, cosine, sine])
-        return (image, p)
+
+        if self.return_image_paths:
+            return (image, p, image_paths)
+        else:
+            return (image, p)
 
 from utils import foldr
 
 class PerceptionCarDatasetMerged(Dataset):
 
-    def __init__(self, *dataset_paths, mode, preprocess = PerceptionCarDataset.default_preprocessing, augment = True, only_front_camera = False, split = "manual"):
-        self.datasets = list(map(lambda dp: PerceptionCarDataset(dp, mode, preprocess, augment, only_front_camera, split), dataset_paths))
+    def __init__(self, *dataset_paths, mode, preprocess = PerceptionCarDataset.default_preprocessing, augment = True, only_front_camera = False, split = "manual", return_image_paths = False):
+        self.datasets = list(map(lambda dp: PerceptionCarDataset(dp, mode, preprocess, augment, only_front_camera, split, return_image_paths), dataset_paths))
         self.size = foldr(lambda i, r: len(i) + r, self.datasets, 0)
         
         # self.origin = self.datasets[0].origin
@@ -261,12 +272,7 @@ class PerceptionCarDatasetMerged(Dataset):
                 idx -= len(dataset)
                 continue
                 
-            item = dataset[idx]
-            image, pose = item
-            # x, y, *q = pose
-            # x, y, _ = torch.Tensor([x, y, 0]) + dataset.origin_offset
-            # pose = torch.Tensor(pose)
-            return (image, pose)
+            return dataset[idx]
 
         assert False # This shouldn't happen
 
