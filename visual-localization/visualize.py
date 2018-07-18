@@ -25,8 +25,9 @@ class PosePlotter:
         imagery = OSM()
 
         self.fig = plt.figure()
+        self.fig.subplots_adjust(left = 0, right = 1, bottom = 0, top = 1)
         ax = self.fig.add_subplot(1, 1, 1, projection = imagery.crs)
-        
+
         ax.set_extent([
             PosePlotter.lng_min,
             PosePlotter.lng_max,
